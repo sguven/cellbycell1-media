@@ -1,0 +1,317 @@
+"""@cellbycell1 Reels engine: brand constants, easing, spreadsheet drawing, cards, render + mux.
+
+Reuse and extend this file for every Reel; do not rewrite it per video.
+"""
+import math, os, subprocess
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
+
+W, H, FPS = 1080, 1920, 30
+SAFE_TOP, SAFE_BOTTOM = 250, H - 350   # keep text between these (Instagram UI)
+
+FD = "/usr/share/fonts/truetype/google-fonts/"
+MONO = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf"
+_fc = {}
+def F(w, s):
+    k = (w, s)
+    if k not in _fc:
+        _fc[k] = ImageFont.truetype(MONO if w == "Mono" else FD + f"Poppins-{w}.ttf", s)
+    return _fc[k]
+
+# ---------- brand ----------
+NAVY = (19, 35, 63)        # background
+NAVY2 = (38, 56, 90)       # empty cells / panels
+NAVY3 = (58, 78, 116)      # grid lines
+AMBER = (255, 176, 32)     # highlight / brand accent
+WHITE = (255, 255, 255)
+MUTED = (170, 184, 210)
+GREEN = (34, 176, 112)     # do / correct
+RED = (234, 72, 77)        # don't / wrong
+BLUE = (88, 160, 255)      # second range highlight
+
+# ---------- easing ----------
+def clamp(x, a=0.0, b=1.0): return max(a, min(b, x))
+def ease(x): x = clamp(x); return 1 - (1 - x) ** 3
+def ease_io(x): x = clamp(x); return 3 * x * x - 2 * x * x * x
+def back(x):
+    x = clamp(x); c1 = 1.70158; c3 = c1 + 1
+    return 1 + c3 * (x - 1) ** 3 + c1 * (x - 1) ** 2
+def seg(t, a, b): return clamp((t - a) / (b - a))
+
+def rgba(c, a): return tuple(c[:3]) + (int(clamp(a) * 255),)
+
+# ---------- background ----------
+_bg = None
+def background():
+    """Navy background with a faint spreadsheet grid."""
+    global _bg
+    if _bg is None:
+        im = Image.new("RGBA", (W, H), NAVY + (255,))
+        d = ImageDraw.Draw(im)
+        for x in range(0, W, 120): d.line([(x, 0), (x, H)], fill=(28, 46, 78), width=2)
+        for y in range(0, H, 60): d.line([(0, y), (W, y)], fill=(28, 46, 78), width=2)
+        _bg = im
+    return _bg.copy()
+
+# ---------- text helpers ----------
+def text_center(d, xy, s, font, fill, stroke=0, stroke_fill=NAVY):
+    d.text(xy, s, font=font, fill=fill, anchor="mm", stroke_width=stroke, stroke_fill=stroke_fill)
+
+def pop_text(base, s, cx, cy, font, fill, t, t0, stroke=8, dur=0.35):
+    """Text that pops in with an overshoot scale."""
+    p = seg(t, t0, t0 + dur)
+    if p <= 0: return
+    sc = back(p)
+    tw = int(font.getlength(s)) + stroke * 2 + 40
+    th = font.size + stroke * 2 + 60
+    lay = Image.new("RGBA", (tw, th), (0, 0, 0, 0))
+    ImageDraw.Draw(lay).text((tw // 2, th // 2), s, font=font, fill=fill, anchor="mm",
+                             stroke_width=stroke, stroke_fill=NAVY)
+    nw, nh = max(1, int(tw * sc)), max(1, int(th * sc))
+    lay = lay.resize((nw, nh), Image.LANCZOS)
+    base.alpha_composite(lay, (int(cx - nw / 2), int(cy - nh / 2)))
+
+def pill(d, cx, cy, s, bg, fg=WHITE, size=40, a=1.0):
+    f = F("Bold", size)
+    w = f.getlength(s) + size * 1.4
+    h = size * 1.8
+    d.rounded_rectangle([cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2], h / 2, fill=rgba(bg, a))
+    d.text((cx, cy), s, font=f, fill=rgba(fg, a), anchor="mm")
+
+def label_card(base, t, t0, tag, tag_col, title, y=300, sub=None):
+    """Top card: colored tag pill + big title (+ optional subtitle). Slides in."""
+    p = ease(seg(t, t0, t0 + 0.4))
+    if p <= 0: return
+    lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+    dy = (1 - p) * 60
+    pill(d, W / 2, y + dy, tag, tag_col, size=38, a=p)
+    fT = F("Bold", 76)
+    lines = title.split("\n")
+    for i, ln in enumerate(lines):
+        d.text((W / 2, y + 120 + i * 92 + dy), ln, font=fT, fill=rgba(WHITE, p), anchor="mm")
+    if sub:
+        d.text((W / 2, y + 120 + len(lines) * 92 + 10 + dy), sub, font=F("Medium", 42), fill=rgba(MUTED, p), anchor="mm")
+    base.alpha_composite(lay)
+
+def check_icon(d, cx, cy, r, col=GREEN, a=1.0):
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=rgba(col, a))
+    w = max(4, int(r * 0.22))
+    d.line([(cx - r * 0.45, cy + r * 0.02), (cx - r * 0.12, cy + r * 0.35), (cx + r * 0.48, cy - r * 0.35)],
+           fill=rgba(WHITE, a), width=w, joint="curve")
+
+def cross_icon(d, cx, cy, r, col=RED, a=1.0):
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=rgba(col, a))
+    w = max(4, int(r * 0.22)); k = r * 0.38
+    d.line([(cx - k, cy - k), (cx + k, cy + k)], fill=rgba(WHITE, a), width=w)
+    d.line([(cx - k, cy + k), (cx + k, cy - k)], fill=rgba(WHITE, a), width=w)
+
+def arrow(d, x0, y0, x1, y1, col, width=12, head=34, a=1.0):
+    d.line([(x0, y0), (x1, y1)], fill=rgba(col, a), width=width)
+    ang = math.atan2(y1 - y0, x1 - x0)
+    p1 = (x1 - head * math.cos(ang - 0.5), y1 - head * math.sin(ang - 0.5))
+    p2 = (x1 - head * math.cos(ang + 0.5), y1 - head * math.sin(ang + 0.5))
+    d.polygon([(x1, y1), p1, p2], fill=rgba(col, a))
+
+# ---------- spreadsheet ----------
+class Sheet:
+    """A small spreadsheet: column letters, row numbers, cells.
+
+    cols: list of column widths (px). rows: list of lists of cell strings (row 0 = header row of the data).
+    """
+    def __init__(self, x, y, col_w, data, row_h=92, letters=None):
+        self.x, self.y, self.col_w, self.data, self.row_h = x, y, col_w, data, row_h
+        self.letters = letters or [chr(65 + i) for i in range(len(col_w))]
+        self.hdr_h, self.num_w = 58, 64
+
+    def width(self): return self.num_w + sum(self.col_w)
+    def height(self): return self.hdr_h + self.row_h * len(self.data)
+
+    def col_x(self, c):
+        return self.x + self.num_w + sum(self.col_w[:c])
+
+    def cell_box(self, r, c):
+        x0 = self.col_x(c); y0 = self.y + self.hdr_h + r * self.row_h
+        return [x0, y0, x0 + self.col_w[c], y0 + self.row_h]
+
+    def col_box(self, c, r0=1, r1=None):
+        r1 = len(self.data) - 1 if r1 is None else r1
+        b0, b1 = self.cell_box(r0, c), self.cell_box(r1, c)
+        return [b0[0], b0[1], b1[2], b1[3]]
+
+    def draw(self, base, a=1.0, fills=None, text_cols=None, font_size=40):
+        """fills: {(r,c): color} cell tints. text_cols: {(r,c): color} text color overrides."""
+        fills = fills or {}; text_cols = text_cols or {}
+        lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+        x, y = self.x, self.y
+        sh = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        ImageDraw.Draw(sh).rounded_rectangle([x, y + 16, x + self.width(), y + self.height() + 16], 26, fill=(0, 0, 0, int(120 * a)))
+        base.alpha_composite(sh.filter(ImageFilter.GaussianBlur(16)))
+        d.rounded_rectangle([x, y, x + self.width(), y + self.height()], 26, fill=rgba((250, 251, 253), a))
+        # header strip
+        d.rounded_rectangle([x, y, x + self.width(), y + self.hdr_h + 26], 26, fill=rgba((226, 231, 240), a))
+        d.rectangle([x, y + self.hdr_h, x + self.width(), y + self.hdr_h + 26], fill=rgba((250, 251, 253), a))
+        d.rectangle([x, y + self.hdr_h, x + self.num_w, y + self.height() - 26], fill=rgba((226, 231, 240), a))
+        d.rounded_rectangle([x, y + self.height() - 52, x + self.num_w, y + self.height()], 26, fill=rgba((226, 231, 240), a))
+        d.rectangle([x + 26, y + self.height() - 52, x + self.num_w, y + self.height()], fill=rgba((226, 231, 240), a))
+        fh = F("Bold", 30)
+        for c, L in enumerate(self.letters):
+            cx = self.col_x(c) + self.col_w[c] / 2
+            d.text((cx, y + self.hdr_h / 2), L, font=fh, fill=rgba((96, 108, 130), a), anchor="mm")
+        for r in range(len(self.data)):
+            cy = y + self.hdr_h + r * self.row_h + self.row_h / 2
+            d.text((x + self.num_w / 2, cy), str(r + 1), font=fh, fill=rgba((96, 108, 130), a), anchor="mm")
+        for (r, c), col in fills.items():
+            b = self.cell_box(r, c)
+            d.rectangle(b, fill=rgba(col, a))
+        # grid
+        for c in range(len(self.col_w) + 1):
+            gx = self.col_x(c) if c < len(self.col_w) else x + self.width()
+            if c == len(self.col_w): continue
+            d.line([(gx, y), (gx, y + self.height())], fill=rgba((206, 213, 225), a), width=2)
+        for r in range(len(self.data) + 1):
+            gy = y + self.hdr_h + r * self.row_h
+            d.line([(x, gy), (x + self.width(), gy)], fill=rgba((206, 213, 225), a), width=2)
+        for r, row in enumerate(self.data):
+            for c, s in enumerate(row):
+                if not s: continue
+                b = self.cell_box(r, c)
+                bold = r == 0
+                f = F("Bold" if bold else "Medium", font_size if not bold else font_size - 4)
+                col = text_cols.get((r, c), (30, 40, 60) if not bold else (70, 82, 104))
+                d.text((b[0] + 22, (b[1] + b[3]) / 2), s, font=f, fill=rgba(col, a), anchor="lm")
+        base.alpha_composite(lay)
+
+    def outline(self, base, box, col, a=1.0, width=8, dash=False):
+        lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+        d.rounded_rectangle([box[0] - 4, box[1] - 4, box[2] + 4, box[3] + 4], 10, outline=rgba(col, a), width=width)
+        base.alpha_composite(lay)
+
+def formula_bar(base, x, y, w, text, t=None, t0=0.0, cps=28, a=1.0, colors=None, size=46):
+    """A formula bar with an 'fx' tag; text types on from t0 at cps chars/s when t is given.
+    colors: list of (substring, color) to tint parts of the formula."""
+    lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+    h = 104
+    d.rounded_rectangle([x, y, x + w, y + h], 24, fill=rgba(WHITE, a))
+    d.rounded_rectangle([x + 14, y + 16, x + 92, y + h - 16], 16, fill=rgba(NAVY2, a))
+    d.text((x + 53, y + h / 2), "fx", font=F("Bold", 34), fill=rgba(AMBER, a), anchor="mm")
+    n = len(text) if t is None else int(clamp((t - t0) * cps, 0, len(text)))
+    shown = text[:n]
+    f = F("Mono", size)
+    # colorize by spans
+    spans = [(0, len(text), (30, 40, 60))]
+    if colors:
+        spans = []
+        i = 0
+        marks = []
+        for sub, col in colors:
+            k = text.find(sub)
+            if k >= 0: marks.append((k, k + len(sub), col))
+        marks.sort()
+        for k0, k1, col in marks:
+            if k0 > i: spans.append((i, k0, (30, 40, 60)))
+            spans.append((k0, k1, col)); i = k1
+        if i < len(text): spans.append((i, len(text), (30, 40, 60)))
+    cx = x + 118
+    for k0, k1, col in spans:
+        part = shown[k0:k1] if k0 < n else ""
+        if part:
+            d.text((cx, y + h / 2), part, font=f, fill=rgba(col, a), anchor="lm")
+        cx += f.getlength(text[k0:k1])
+    # caret
+    if t is not None and n < len(text) and int(t * 4) % 2 == 0:
+        ccx = x + 118 + f.getlength(shown)
+        d.line([(ccx + 2, y + 26), (ccx + 2, y + h - 26)], fill=rgba(NAVY, a), width=4)
+    base.alpha_composite(lay)
+    return h
+
+def result_chip(base, cx, cy, s, ok, t, t0):
+    """Big result chip with check or cross that pops in."""
+    p = seg(t, t0, t0 + 0.35)
+    if p <= 0: return
+    sc = back(p)
+    f = F("Bold", 54)
+    w = f.getlength(s) + 190; h = 120
+    lay = Image.new("RGBA", (int(w) + 40, h + 40), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+    col = GREEN if ok else RED
+    d.rounded_rectangle([20, 20, 20 + w, 20 + h], h / 2, fill=col + (255,))
+    (check_icon if ok else cross_icon)(d, 20 + 62, 20 + h / 2, 38, col=WHITE)
+    # redraw glyph in the brand color on white disc
+    d.ellipse([20 + 24, 20 + h / 2 - 38, 20 + 100, 20 + h / 2 + 38], fill=WHITE)
+    (check_icon if ok else cross_icon)(d, 20 + 62, 20 + h / 2, 30, col=col)
+    d.text((20 + 124, 20 + h / 2), s, font=f, fill=WHITE, anchor="lm")
+    nw, nh = int(lay.width * sc), int(lay.height * sc)
+    lay = lay.resize((max(1, nw), max(1, nh)), Image.LANCZOS)
+    base.alpha_composite(lay, (int(cx - nw / 2), int(cy - nh / 2)))
+
+def punch(frame, t, t0=0.0, amt=0.06, dur=0.5):
+    """Punch-in zoom: starts zoomed amt and settles to 1.0."""
+    p = ease(seg(t, t0, t0 + dur))
+    s = 1 + amt * (1 - p)
+    if s <= 1.0005: return frame
+    nw, nh = int(W * s), int(H * s)
+    big = frame.resize((nw, nh), Image.BILINEAR)
+    return big.crop(((nw - W) // 2, (nh - H) // 2, (nw - W) // 2 + W, (nh - H) // 2 + H))
+
+def shake(frame, t, t0, dur=0.25, amp=14):
+    p = seg(t, t0, t0 + dur)
+    if p <= 0 or p >= 1: return frame
+    dx = int(math.sin(p * 40) * amp * (1 - p))
+    out = Image.new("RGBA", (W, H), NAVY + (255,)); out.alpha_composite(frame, (dx, 0))
+    return out
+
+def outro(t, handle="@cellbycell1", line1="Save this for", line2="your next spreadsheet!"):
+    base = background()
+    lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+    p = ease(seg(t, 0.05, 0.5))
+    top = 560 + (1 - p) * 60
+    d.rounded_rectangle([70, top, W - 70, top + 660], 56, fill=rgba(AMBER, p))
+    a = p
+    bx, by = W / 2, top + 140
+    d.polygon([(bx - 48, by - 70), (bx + 48, by - 70), (bx + 48, by + 70), (bx, by + 30), (bx - 48, by + 70)], fill=rgba(NAVY, a))
+    d.text((W / 2, top + 290), line1, font=F("Bold", 74), fill=rgba(NAVY, a), anchor="mm")
+    d.text((W / 2, top + 380), line2, font=F("Bold", 64), fill=rgba(NAVY, a), anchor="mm")
+    q = ease(seg(t, 0.8, 1.3))
+    d.rounded_rectangle([W / 2 - 300, top + 480, W / 2 + 300, top + 590], 55, fill=rgba(NAVY, q))
+    d.text((W / 2, top + 535), f"Follow {handle}", font=F("Bold", 44), fill=rgba(WHITE, q), anchor="mm")
+    base.alpha_composite(lay)
+    return base
+
+# ---------- render ----------
+def render_scene(scene, outdir):
+    name, fn, D = scene
+    n = int(round(D * FPS))
+    out = os.path.join(outdir, f"{name}.mp4"); tmp = out[:-4] + ".tmp.mp4"
+    cmd = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
+           "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "veryfast", "-crf", "18",
+           "-pix_fmt", "yuv420p", "-r", str(FPS), tmp]
+    pr = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+    for k in range(n):
+        pr.stdin.write(fn(k / FPS, D).convert("RGB").tobytes())
+    pr.stdin.close()
+    if pr.wait() != 0: raise RuntimeError(f"ffmpeg failed for {name}")
+    os.replace(tmp, out)
+    return name
+
+def stills(scenes, outdir, fracs=(0.5, 0.95)):
+    os.makedirs(outdir, exist_ok=True)
+    for name, fn, D in scenes:
+        for fr in fracs:
+            fn(D * fr, D).convert("RGB").save(os.path.join(outdir, f"{name}_{int(fr*100)}.jpg"), quality=85)
+
+def render_all(scenes, workdir, final_mp4, audio_wav, procs=2):
+    from multiprocessing import Pool
+    from functools import partial
+    os.makedirs(workdir, exist_ok=True)
+    with Pool(procs) as p:
+        for r in p.imap_unordered(partial(render_scene, outdir=workdir), scenes): print("done", r, flush=True)
+    lst = os.path.join(workdir, "list.txt")
+    with open(lst, "w") as f:
+        for name, _, _ in scenes: f.write(f"file '{os.path.join(workdir, name)}.mp4'\n")
+    silent = os.path.join(workdir, "video.mp4")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", lst, "-c", "copy", silent], check=True)
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", silent, "-i", audio_wav, "-c:v", "copy", "-c:a", "aac",
+                    "-b:a", "192k", "-shortest", "-movflags", "+faststart", final_mp4], check=True)
+
+def scene_starts(scenes):
+    out, t = [], 0.0
+    for _, _, D in scenes: out.append(t); t += D
+    return out, t

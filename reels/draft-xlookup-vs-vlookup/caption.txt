@@ -1,0 +1,13 @@
+STOP using VLOOKUP. Here's why 👇
+
+1. It can't look left
+2. Insert a column and =VLOOKUP(...,3,FALSE) returns the wrong column
+3. Forget FALSE and it returns a wrong match with no error
+
+The fix: =XLOOKUP(what, search_range, return_range)
+Looks left, exact match by default, and add "Not found" as a 4th argument.
+Works in Excel 365 / 2021+ and Google Sheets.
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #xlookup #spreadsheettips
