@@ -315,3 +315,102 @@ def scene_starts(scenes):
     out, t = [], 0.0
     for _, _, D in scenes: out.append(t); t += D
     return out, t
+
+# ---------- menus & dialogs (drawn, generic; never product screenshots) ----------
+def menu_path(base, t, t0, steps, y, size=36, gap=0.45, col=NAVY2, hot=AMBER, max_w=W - 120):
+    """Menu path as pills joined by chevrons ("Data" > "Remove Duplicates").
+    Steps pop in one after another (gap s); the newest step flashes amber with a click ring.
+    Wraps onto a second row when wider than max_w. Returns the time the last step appears."""
+    f = F("Bold", size)
+    ws = [f.getlength(s) + size * 1.4 for s in steps]
+    chev = size * 1.3
+    rows, cur, cw = [], [], 0
+    for i, w in enumerate(ws):
+        add = w + (chev if cur else 0)
+        if cur and cw + add > max_w:
+            rows.append(cur); cur, cw = [], 0; add = w
+        cur.append(i); cw += add
+    rows.append(cur)
+    h = size * 1.8
+    lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+    for ri, idx in enumerate(rows):
+        tot = sum(ws[i] for i in idx) + chev * (len(idx) - 1)
+        x = (W - tot) / 2; cy = y + ri * (h + 26)
+        for j, i in enumerate(idx):
+            ti = t0 + i * gap
+            p = ease(seg(t, ti, ti + 0.25))
+            if j > 0 or ri > 0:
+                if j > 0:
+                    ca = p
+                    cx0 = x - chev / 2
+                    d.line([(cx0 - 8, cy - 14), (cx0 + 8, cy), (cx0 - 8, cy + 14)], fill=rgba(MUTED, ca), width=6, joint="curve")
+            if p > 0:
+                active = t < ti + 0.45 or i == len(steps) - 1
+                bg = hot if active else col
+                fg = NAVY if active else WHITE
+                sc = back(seg(t, ti, ti + 0.25))
+                ww, hh = ws[i] * sc, h * sc
+                cx = x + ws[i] / 2
+                d.rounded_rectangle([cx - ww / 2, cy - hh / 2, cx + ww / 2, cy + hh / 2], hh / 2, fill=rgba(bg, p))
+                d.text((cx, cy), steps[i], font=F("Bold", max(8, int(size * sc))), fill=rgba(fg, p), anchor="mm")
+                q = seg(t, ti + 0.15, ti + 0.55)
+                if 0 < q < 1:
+                    r = 20 + 70 * ease(q)
+                    d.ellipse([cx - r, cy - r, cx + r, cy + r], outline=rgba(WHITE, 1 - q), width=6)
+            x += ws[i] + chev
+    base.alpha_composite(lay)
+    return t0 + gap * (len(steps) - 1)
+
+def checkbox(d, x, y, s, on, a=1.0, size=40, box=46):
+    """Checkbox + label at (x, y=center). on: 0..1 fill progress."""
+    d.rounded_rectangle([x, y - box / 2, x + box, y + box / 2], 10, outline=rgba((120, 132, 156), a), width=4,
+                        fill=rgba(GREEN, a * on) if on > 0 else None)
+    if on > 0.3:
+        d.line([(x + box * 0.22, y + 1), (x + box * 0.43, y + box * 0.24), (x + box * 0.8, y - box * 0.24)],
+               fill=rgba(WHITE, a), width=6, joint="curve")
+    d.text((x + box + 24, y), s, font=F("Medium", size), fill=rgba((30, 40, 60), a), anchor="lm")
+
+def dialog(base, t, t0, title, items, button, y=720, w=760, t_out=None, tick_gap=0.2, press=None):
+    """Generic modal dialog: title, checkbox rows (ticked one by one from t0+0.35), and a button.
+    press: time the button is pressed (flash). t_out: time it fades out."""
+    p = ease(seg(t, t0, t0 + 0.3))
+    if t_out is not None: p *= 1 - ease(seg(t, t_out, t_out + 0.25))
+    if p <= 0: return
+    dim = Image.new("RGBA", (W, H), (10, 18, 34, int(130 * p))); base.alpha_composite(dim)
+    sc = 0.9 + 0.1 * back(seg(t, t0, t0 + 0.3))
+    hgt = 130 + len(items) * 84 + 150
+    lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+    x0 = (W - w) / 2
+    d.rounded_rectangle([x0, y, x0 + w, y + hgt], 30, fill=rgba(WHITE, p))
+    d.rounded_rectangle([x0, y, x0 + w, y + 100], 30, fill=rgba((226, 231, 240), p))
+    d.rectangle([x0, y + 70, x0 + w, y + 100], fill=rgba((226, 231, 240), p))
+    d.text((x0 + 40, y + 52), title, font=F("Bold", 40), fill=rgba((40, 52, 76), p), anchor="lm")
+    for i, s in enumerate(items):
+        on = ease(seg(t, t0 + 0.35 + i * tick_gap, t0 + 0.5 + i * tick_gap))
+        checkbox(d, x0 + 50, y + 150 + i * 84, s, on, a=p)
+    bf = F("Bold", 38); bw = bf.getlength(button) + 80
+    by = y + hgt - 85
+    pr = 0 if press is None else seg(t, press, press + 0.25)
+    bcol = GREEN if 0 < pr else (40, 110, 220)
+    d.rounded_rectangle([x0 + w - 40 - bw, by - 40, x0 + w - 40, by + 40], 40, fill=rgba(bcol, p))
+    d.text((x0 + w - 40 - bw / 2, by), button, font=bf, fill=rgba(WHITE, p), anchor="mm")
+    if 0 < pr < 1:
+        cx = x0 + w - 40 - bw / 2; r = 30 + 70 * ease(pr)
+        d.ellipse([cx - r, by - r, cx + r, by + r], outline=rgba(AMBER, 1 - pr), width=6)
+    if sc < 0.999:
+        lay = lay.resize((int(W * sc), int(H * sc)), Image.BILINEAR)
+        full = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        full.alpha_composite(lay, (int((W - lay.width) / 2), int((H - lay.height) / 2 + (y + hgt / 2 - H / 2) * (1 - sc))))
+        lay = full
+    base.alpha_composite(lay)
+
+def strike_rows(base, sheet, rows, t, t0, col=RED, width=8):
+    """Draw a strike-through line across whole rows of a Sheet, growing from t0."""
+    p = ease(seg(t, t0, t0 + 0.3))
+    if p <= 0: return
+    lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+    for r in rows:
+        b0 = sheet.cell_box(r, 0); b1 = sheet.cell_box(r, len(sheet.col_w) - 1)
+        cy = (b0[1] + b0[3]) / 2
+        d.line([(b0[0] + 10, cy), (b0[0] + 10 + (b1[2] - b0[0] - 20) * p, cy)], fill=rgba(col, 1), width=width)
+    base.alpha_composite(lay)

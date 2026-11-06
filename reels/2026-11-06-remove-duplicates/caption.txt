@@ -1,0 +1,12 @@
+Duplicate rows are wrecking your totals. Delete them in seconds 👇
+
+Excel: select your data > Data tab > Remove Duplicates > tick the columns to check > OK
+Google Sheets: Data > Data cleanup > Remove duplicates
+Heads up: it deletes whole rows, so keep a copy first (Ctrl+Z / Cmd+Z undoes it).
+Want to keep the original? =UNIQUE(A2:A7) lists each value once in a new column.
+
+Remove Duplicates works in Excel (Windows & Mac) and Google Sheets. UNIQUE needs Excel 365 / 2021+ or Google Sheets.
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #removeduplicates #datacleaning
