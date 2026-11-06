@@ -25,7 +25,7 @@ Mon ~14:30 · Tue–Thu ~13:00 · Fri–Sat ~12:30 · Sun ~17:00
 - Structure: hook (≈3 s) → problem(s) or "why" → the fix shown on a real mini table with the formula typed in the
   formula bar and the result chip → bonus/variation → "Works in" (Excel version + Google Sheets, or flag if one app only)
   → outro card "Save this for your next spreadsheet!" + "Follow @cellbycell1".
-- Reference implementation: `reels/2026-11-xx-xlookup-vs-vlookup/render.py` (first Reel; folder is renamed with the post date).
+- Reference implementation: `reels/2026-11-05-xlookup-vs-vlookup/render.py` (first Reel).
   Each Reel gets its own folder with `render.py`, the mp4, `cover.jpg` and `caption.txt`.
 
 ## Hook / cover rules
