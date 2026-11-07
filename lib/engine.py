@@ -137,9 +137,11 @@ class Sheet:
         b0, b1 = self.cell_box(r0, c), self.cell_box(r1, c)
         return [b0[0], b0[1], b1[2], b1[3]]
 
-    def draw(self, base, a=1.0, fills=None, text_cols=None, font_size=40):
-        """fills: {(r,c): color} cell tints. text_cols: {(r,c): color} text color overrides."""
-        fills = fills or {}; text_cols = text_cols or {}
+    def draw(self, base, a=1.0, fills=None, text_cols=None, font_size=40, checks=None, strike=None):
+        """fills: {(r,c): color} cell tints. text_cols: {(r,c): color} text color overrides.
+        checks: {(r,c): 0..1} draw an in-cell checkbox (0 = empty, 1 = ticked) instead of the text.
+        strike: {(r,c): 0..1} strikethrough line across the cell text, growing left to right."""
+        fills = fills or {}; text_cols = text_cols or {}; checks = checks or {}; strike = strike or {}
         lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
         x, y = self.x, self.y
         sh = Image.new("RGBA", (W, H), (0, 0, 0, 0))
@@ -170,14 +172,33 @@ class Sheet:
         for r in range(len(self.data) + 1):
             gy = y + self.hdr_h + r * self.row_h
             d.line([(x, gy), (x + self.width(), gy)], fill=rgba((206, 213, 225), a), width=2)
+        for (r, c), on in checks.items():
+            b = self.cell_box(r, c); bx = min(52, self.row_h * 0.56)
+            cx, cy = (b[0] + b[2]) / 2, (b[1] + b[3]) / 2
+            sc = 1 + 0.18 * math.sin(math.pi * clamp(on))
+            k = bx * sc / 2
+            d.rounded_rectangle([cx - k, cy - k, cx + k, cy + k], 9, outline=rgba((120, 132, 156) if on < 0.5 else GREEN, a),
+                                width=4, fill=rgba(GREEN, a * clamp(on * 2)) if on > 0 else rgba(WHITE, a))
+            if on > 0.35:
+                q = clamp((on - 0.35) / 0.65)
+                p0, p1, p2 = (cx - k * 0.5, cy + 1), (cx - k * 0.12, cy + k * 0.42), (cx + k * 0.55, cy - k * 0.45)
+                if q < 0.4:
+                    e = q / 0.4; d.line([p0, (p0[0] + (p1[0] - p0[0]) * e, p0[1] + (p1[1] - p0[1]) * e)], fill=rgba(WHITE, a), width=6)
+                else:
+                    e = (q - 0.4) / 0.6
+                    d.line([p0, p1, (p1[0] + (p2[0] - p1[0]) * e, p1[1] + (p2[1] - p1[1]) * e)], fill=rgba(WHITE, a), width=6, joint="curve")
         for r, row in enumerate(self.data):
             for c, s in enumerate(row):
-                if not s: continue
+                if not s or (r, c) in checks: continue
                 b = self.cell_box(r, c)
                 bold = r == 0
                 f = F("Bold" if bold else "Medium", font_size if not bold else font_size - 4)
                 col = text_cols.get((r, c), (30, 40, 60) if not bold else (70, 82, 104))
                 d.text((b[0] + 22, (b[1] + b[3]) / 2), s, font=f, fill=rgba(col, a), anchor="lm")
+                sp = clamp(strike.get((r, c), 0))
+                if sp > 0:
+                    cy = (b[1] + b[3]) / 2 + 2
+                    d.line([(b[0] + 16, cy), (b[0] + 16 + (f.getlength(s) + 12) * sp, cy)], fill=rgba(col, a), width=5)
         base.alpha_composite(lay)
 
     def outline(self, base, box, col, a=1.0, width=8, dash=False):
