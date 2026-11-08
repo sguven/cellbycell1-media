@@ -92,7 +92,13 @@ def _add(buf, x, start):
     buf[max(0, i):j] += x[max(0, -i):j - i]
 
 def make_track(duration, cuts=(), impacts=(), out_wav="music.wav", bpm=124, seed=11,
-               prog=((57, 60, 64), (53, 57, 60), (48, 52, 55), (55, 59, 62)), lufs=-15.0):
+               prog=((57, 60, 64), (53, 57, 60), (48, 52, 55), (55, 59, 62)), lufs=-15.0, style=None):
+    """style=None/"housepop" -> this original sound; funk/disco/futurebounce/dembow/trap/synthwave -> music_styles
+    (use music_styles.pick_style(slug) to rotate styles per video). Returns integrated LUFS either way."""
+    if style not in (None, "housepop"):
+        try: from . import music_styles
+        except ImportError: import music_styles
+        return music_styles.make_styled(duration, cuts, impacts, out_wav, style=style, seed=seed, lufs=lufs)
     rng = np.random.default_rng(seed)
     n = int(duration * SR) + SR
     drums = np.zeros(n); bass = np.zeros(n); synth = np.zeros(n); fx = np.zeros(n)
