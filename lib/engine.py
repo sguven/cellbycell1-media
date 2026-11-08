@@ -435,3 +435,56 @@ def strike_rows(base, sheet, rows, t, t0, col=RED, width=8):
         cy = (b0[1] + b0[3]) / 2
         d.line([(b0[0] + 10, cy), (b0[0] + 10 + (b1[2] - b0[0] - 20) * p, cy)], fill=rgba(col, 1), width=width)
     base.alpha_composite(lay)
+
+# ---------- keyboard shortcuts ----------
+SEP_WORDS = ("then", "+")
+def keycaps(base, t, t0, keys, cy, size=40, gap=0.22, cx=W / 2, a=1.0, hot=AMBER):
+    """Keyboard combo drawn as keycaps, e.g. ["Ctrl", "+", "Shift", "+", ";"] or with "then" between steps.
+    Caps pop in one by one (gap s) and get a press dip; "+" and "then" are drawn as plain separators.
+    Pressed caps turn amber. Returns the time the last cap is pressed."""
+    f = F("Bold", size); fs = F("Bold", int(size * 0.8)); fthen = F("Medium", int(size * 0.72))
+    ch = size * 2.0; pad = size * 0.7
+    items = []
+    for k in keys:
+        if k == "+": items.append(("plus", k, fs.getlength("+") + size * 0.6))
+        elif k == "then": items.append(("then", k, fthen.getlength("then") + size * 0.7))
+        else: items.append(("cap", k, max(ch, f.getlength(k) + pad * 2)))
+    tot = sum(w for *_, w in items)
+    x = cx - tot / 2
+    lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+    ci = 0; last = t0
+    for kind, s, w in items:
+        if kind == "cap":
+            ti = t0 + ci * gap; last = ti; ci += 1
+            p = ease(seg(t, ti - 0.12, ti + 0.08))
+            if p > 0:
+                dip = 10 * math.sin(math.pi * seg(t, ti, ti + 0.18))
+                pressed = t >= ti
+                top = cy - ch / 2 + dip + (1 - p) * 30
+                d.rounded_rectangle([x, cy - ch / 2 + 12 + (1 - p) * 30, x + w, cy + ch / 2 + 12 + (1 - p) * 30], 18,
+                                    fill=rgba((150, 104, 10) if pressed else (12, 22, 42), a * p))
+                d.rounded_rectangle([x, top, x + w, top + ch], 18, fill=rgba(hot if pressed else WHITE, a * p))
+                d.text((x + w / 2, top + ch / 2), s, font=f, fill=rgba(NAVY, a * p), anchor="mm")
+        else:
+            p = ease(seg(t, t0 + (ci - 0.5) * gap - 0.1, t0 + (ci - 0.5) * gap + 0.1))
+            if p > 0:
+                fo = fs if kind == "plus" else fthen
+                d.text((x + w / 2, cy + 6), s, font=fo, fill=rgba(MUTED if kind == "then" else WHITE, a * p), anchor="mm")
+        x += w
+    base.alpha_composite(lay)
+    return last
+
+def info_rows(base, t, t0, items, y0=760, step=170, gap=0.3, size=46):
+    """Stacked navy rows with an icon (True = check, False = cross, None = amber dot) sliding in one by one.
+    items: list of (text, ok)."""
+    for i, (s, ok) in enumerate(items):
+        p = ease(seg(t, t0 + i * gap, t0 + 0.3 + i * gap))
+        if p <= 0: continue
+        y = y0 + i * step + (1 - p) * 30
+        lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); ld = ImageDraw.Draw(lay)
+        ld.rounded_rectangle([70, y - 62, W - 70, y + 62], 36, fill=rgba(NAVY2, p))
+        if ok is True: check_icon(ld, 145, y, 36, a=p)
+        elif ok is False: cross_icon(ld, 145, y, 36, a=p)
+        else: ld.ellipse([125, y - 20, 165, y + 20], fill=rgba(AMBER, p))
+        ld.text((210, y), s, font=F("Bold", size), fill=rgba(WHITE, p), anchor="lm")
+        base.alpha_composite(lay)

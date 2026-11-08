@@ -14,6 +14,11 @@
    "slug": "2026-11-07-checkbox-todo-list",
    "style": "housepop",
    "seed": 0
+  },
+  {
+   "slug": "2026-11-08-date-time-shortcuts",
+   "style": "funk",
+   "seed": 903
   }
  ]
 }

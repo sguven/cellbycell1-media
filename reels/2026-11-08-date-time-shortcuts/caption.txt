@@ -1,0 +1,12 @@
+Stop typing today's date by hand ⏱️ One shortcut stamps it in a second.
+
+Ctrl + ;  →  today's date
+Ctrl + Shift + ;  →  the current time
+Both are fixed values, so they never change. =TODAY() and =NOW() update every time the sheet recalculates (great for "today", bad for a log).
+Date + time in one cell: Excel = Ctrl + ; then Space then Ctrl + Shift + ;  ·  Google Sheets = Ctrl + Alt + Shift + ;
+
+Works in Excel and Google Sheets (Windows keys shown; on a Mac in Google Sheets, use Cmd instead of Ctrl).
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #keyboardshortcuts #spreadsheettips
