@@ -1,0 +1,12 @@
+Stop adding sales by hand ✋ One formula does it with 2 conditions.
+
+=SUMIFS(C2:C7, A2:A7, "Maya", B2:B7, "Jan")  →  adds Sales (C) only where Rep = Maya AND Month = Jan.
+Order: sum range FIRST, then range/criteria pairs. Add more pairs for more conditions.
+Watch out: SUMIF flips it. =SUMIF(A2:A7, "Maya", C2:C7) puts the sum range LAST.
+Text criteria go in "quotes".
+
+Works in Excel (365, 2016 and newer, web, Mac) and Google Sheets, same syntax in both.
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #sumifs #spreadsheettips
