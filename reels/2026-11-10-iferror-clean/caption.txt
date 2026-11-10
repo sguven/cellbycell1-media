@@ -1,0 +1,11 @@
+Hide those ugly #DIV/0! errors with one wrapper 🙈
+
+=IFERROR(B2/C2, "")  →  shows the price, or a blank cell when Units is 0 or empty.
+=IFERROR(B2/C2, "No units")  →  show a message (or 0, or a dash) instead of the error.
+It catches every error: #DIV/0!, #N/A, #VALUE!, #REF!, and typos like #NAME? too. Fix real mistakes first, then wrap the ones you expect.
+
+Works in Excel (365, 2016 and newer, web, Mac) and Google Sheets. Excel needs both arguments; in Sheets the second one is optional (blank if left out).
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #iferror #spreadsheettips
