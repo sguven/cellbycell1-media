@@ -1,5 +1,8 @@
 """Original upbeat background music generated in code (no licensed audio).
 
+NOTE (2026-11-10): the house-pop sound below is LEGACY (sounded metallic). New Reels use the clean styles of
+lib/music_clean.py via music_styles.pick_style(slug) -> make_track(..., style=style, seed=seed).
+
 make_track(duration, cuts, impacts, out_wav): 118-128 BPM four-on-the-floor house-pop loop,
 claps on 2 and 4, offbeat hats, bouncy bass, bright pluck hook, whoosh into each cut,
 impact hits on reveals, fade-out of the last 1.5 s, normalized to about -15 LUFS / <= -1.5 dBTP.
@@ -93,9 +96,15 @@ def _add(buf, x, start):
 
 def make_track(duration, cuts=(), impacts=(), out_wav="music.wav", bpm=124, seed=11,
                prog=((57, 60, 64), (53, 57, 60), (48, 52, 55), (55, 59, 62)), lufs=-15.0, style=None):
-    """style=None/"housepop" -> this original sound; funk/disco/futurebounce/dembow/trap/synthwave -> music_styles
-    (use music_styles.pick_style(slug) to rotate styles per video). Returns integrated LUFS either way."""
-    if style not in (None, "housepop"):
+    """Use music_styles.pick_style(slug) and pass style=... (clean styles, see lib/music_clean.py).
+    style=None -> a clean style chosen from the seed (NOT the old metallic house-pop sound).
+    style="housepop" (legacy) and the other legacy names only exist to re-render old Reels. Returns integrated LUFS."""
+    if style is None:
+        try: from . import music_clean
+        except ImportError: import music_clean
+        st = music_clean.CLEAN_STYLES[int(seed) % len(music_clean.CLEAN_STYLES)]
+        return music_clean.make_clean(duration, cuts, impacts, out_wav, style=st, seed=seed, lufs=lufs)
+    if style != "housepop":
         try: from . import music_styles
         except ImportError: import music_styles
         return music_styles.make_styled(duration, cuts, impacts, out_wav, style=style, seed=seed, lufs=lufs)

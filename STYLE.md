@@ -36,19 +36,24 @@ Mon ~14:30 · Tue–Thu ~13:00 · Fri–Sat ~12:30 · Sun ~17:00
 - Cover = a hook frame where everything is visible (`thumb_offset` ≈ 2400 ms).
 
 ## Music rules
-- Original, generated in code with `lib/music_upbeat.py` (no licensed tracks): ~124 BPM, four-on-the-floor kick,
-  claps on 2 and 4, offbeat hats, bouncy bass, bright pluck hook, energy from beat 1.
+- **Clean, clear sound (owner's request, 2026-11-10):** the old saw/noise-based sounds were too metallic. New Reels use ONLY the
+  clean, band-limited styles in `lib/music_clean.py` (piano, marimba, kalimba, glockenspiel, nylon guitar, clean e-piano,
+  round sine bass, soft claps/snaps/shaker, light reverb, transparent limiter). Never use `housepop`, `funk`, `disco`,
+  `futurebounce`, `dembow`, `trap` or `synthwave` for a new Reel (legacy, kept only to re-render old videos), and do not
+  add saw/square leads, white-noise hi-hats or tanh distortion.
+- Original, generated in code (no licensed tracks), upbeat and positive, energy from beat 1.
 - Whoosh into every scene cut and an impact on the big reveal (pass `cuts` and `impacts` to `make_track`).
-- **Style rotation (mandatory for every new Reel):** the sound must differ from video to video. Do not call `make_track` with a hand-picked seed or prog.
+- **Style rotation (mandatory for every new Reel):** the sound must differ from video to video. Do not hand-pick style/seed/prog.
   ```python
   import music_styles, music_upbeat   # lib/ is on sys.path in render.py
   style, seed = music_styles.pick_style(slug)          # reads/writes content/music_state.json, idempotent per slug
   music_upbeat.make_track(total, cuts=..., impacts=..., out_wav=wav, style=style, seed=seed)
   ```
-  Styles: `housepop` (original), `funk` 106 BPM, `disco` 118, `futurebounce` 126, `dembow` 98, `trap` 140, `synthwave` 112 — all upbeat,
-  all generated in code. The picker never repeats either of the last two styles and evens out usage. Commit `content/music_state.json`
-  together with the Reel. Presets live in `lib/music_styles.py` (`STYLES` dict); to add a style add one entry, no other change needed.
-- About -15 LUFS integrated, peaks ≤ -1.5 dB, fade out the last 1.5 s. (Style rotation above handles variety; `seed`/`prog` only matter for `housepop`.)
+  Clean styles: `brightpop` 118 BPM, `pianohouse` 122, `tropical` 104, `acoustic` 112, `keysfunk` 108, `kalimbapop` 96.
+  The picker never repeats either of the last two styles and evens out usage; the seed also shifts the key slightly.
+  Commit `content/music_state.json` together with the Reel. Presets live in `lib/music_clean.py` (`STYLES` dict); to add a
+  style add one entry there and its name to `CLEAN_STYLES` and `music_styles.ROTATION`. Preview: `python3 lib/music_clean.py brightpop 20 /tmp/p.wav`.
+- About -15 LUFS integrated, peaks ≤ -1.5 dB (the generator outputs ≤ -2 dB), fade out the last 1.5 s.
 
 ## Accuracy rules
 - Every formula, shortcut and menu path must be correct. Check against Microsoft Support and Google Docs Editors Help
