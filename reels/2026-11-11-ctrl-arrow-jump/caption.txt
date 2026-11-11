@@ -1,0 +1,12 @@
+Stop scrolling to find the last row of your data 🛑
+
+Ctrl + Down Arrow jumps straight to the last filled cell in the column (row 5,000 in one keystroke).
+Ctrl + Shift + Down Arrow selects everything from your cell down to the end.
+Works with every arrow: Up, Down, Left, Right.
+Heads up: a blank cell stops the jump, so press again to keep going.
+
+Works in Excel and Google Sheets. On a Mac, use Cmd instead of Ctrl.
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #excelshortcuts #spreadsheettips

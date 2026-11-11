@@ -10,12 +10,16 @@ SAFE_TOP, SAFE_BOTTOM = 250, H - 350   # keep text between these (Instagram UI)
 
 FD = "/usr/share/fonts/truetype/google-fonts/"
 MONO = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf"
+SYM = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"   # arrows, vertical ellipsis, Cmd sign (not in Poppins)
+SYM_CHARS = set("\u2190\u2191\u2192\u2193\u22ee\u2318")       # ← ↑ → ↓ ⋮ ⌘
 _fc = {}
 def F(w, s):
+    """w: Poppins weight ("Bold", "Medium", ...), "Mono" (formulas) or "Sym" (arrow glyphs)."""
     k = (w, s)
     if k not in _fc:
-        _fc[k] = ImageFont.truetype(MONO if w == "Mono" else FD + f"Poppins-{w}.ttf", s)
+        _fc[k] = ImageFont.truetype(MONO if w == "Mono" else SYM if w == "Sym" else FD + f"Poppins-{w}.ttf", s)
     return _fc[k]
+def needs_sym(s): return any(ch in SYM_CHARS for ch in s)
 
 # ---------- brand ----------
 NAVY = (19, 35, 63)        # background
@@ -117,10 +121,14 @@ class Sheet:
 
     cols: list of column widths (px). rows: list of lists of cell strings (row 0 = header row of the data).
     """
-    def __init__(self, x, y, col_w, data, row_h=92, letters=None):
+    def __init__(self, x, y, col_w, data, row_h=92, letters=None, row_labels=None):
+        """row_labels: optional list of row-number strings (e.g. ["1", "2", "\u22ee", "5000"]) for big/scrolled sheets."""
         self.x, self.y, self.col_w, self.data, self.row_h = x, y, col_w, data, row_h
         self.letters = letters or [chr(65 + i) for i in range(len(col_w))]
+        self.row_labels = row_labels
         self.hdr_h, self.num_w = 58, 64
+        if row_labels:   # widen the row-number column for long labels like "5000"
+            self.num_w = max(64, int(max(F("Bold", 26).getlength(l) for l in row_labels) + 34))
 
     def width(self): return self.num_w + sum(self.col_w)
     def height(self): return self.hdr_h + self.row_h * len(self.data)
@@ -160,7 +168,9 @@ class Sheet:
             d.text((cx, y + self.hdr_h / 2), L, font=fh, fill=rgba((96, 108, 130), a), anchor="mm")
         for r in range(len(self.data)):
             cy = y + self.hdr_h + r * self.row_h + self.row_h / 2
-            d.text((x + self.num_w / 2, cy), str(r + 1), font=fh, fill=rgba((96, 108, 130), a), anchor="mm")
+            lab = self.row_labels[r] if self.row_labels else str(r + 1)
+            fl = F("Sym", 30) if needs_sym(lab) else F("Bold", 30 if len(lab) < 4 else 26)
+            d.text((x + self.num_w / 2, cy), lab, font=fl, fill=rgba((96, 108, 130), a), anchor="mm")
         for (r, c), col in fills.items():
             b = self.cell_box(r, c)
             d.rectangle(b, fill=rgba(col, a))
@@ -191,8 +201,9 @@ class Sheet:
             for c, s in enumerate(row):
                 if not s or (r, c) in checks: continue
                 b = self.cell_box(r, c)
-                bold = r == 0
+                bold = r == 0 and not self.row_labels or (self.row_labels and self.row_labels[r] == "1")
                 f = F("Bold" if bold else "Medium", font_size if not bold else font_size - 4)
+                if needs_sym(s): f = F("Sym", font_size)
                 col = text_cols.get((r, c), (30, 40, 60) if not bold else (70, 82, 104))
                 d.text((b[0] + 22, (b[1] + b[3]) / 2), s, font=f, fill=rgba(col, a), anchor="lm")
                 sp = clamp(strike.get((r, c), 0))
@@ -456,6 +467,7 @@ def keycaps(base, t, t0, keys, cy, size=40, gap=0.22, cx=W / 2, a=1.0, hot=AMBER
     for kind, s, w in items:
         if kind == "cap":
             ti = t0 + ci * gap; last = ti; ci += 1
+            fk = F("Sym", int(size * 1.15)) if needs_sym(s) else f
             p = ease(seg(t, ti - 0.12, ti + 0.08))
             if p > 0:
                 dip = 10 * math.sin(math.pi * seg(t, ti, ti + 0.18))
@@ -464,7 +476,7 @@ def keycaps(base, t, t0, keys, cy, size=40, gap=0.22, cx=W / 2, a=1.0, hot=AMBER
                 d.rounded_rectangle([x, cy - ch / 2 + 12 + (1 - p) * 30, x + w, cy + ch / 2 + 12 + (1 - p) * 30], 18,
                                     fill=rgba((150, 104, 10) if pressed else (12, 22, 42), a * p))
                 d.rounded_rectangle([x, top, x + w, top + ch], 18, fill=rgba(hot if pressed else WHITE, a * p))
-                d.text((x + w / 2, top + ch / 2), s, font=f, fill=rgba(NAVY, a * p), anchor="mm")
+                d.text((x + w / 2, top + ch / 2), s, font=fk, fill=rgba(NAVY, a * p), anchor="mm")
         else:
             p = ease(seg(t, t0 + (ci - 0.5) * gap - 0.1, t0 + (ci - 0.5) * gap + 0.1))
             if p > 0:
@@ -488,3 +500,18 @@ def info_rows(base, t, t0, items, y0=760, step=170, gap=0.3, size=46):
         else: ld.ellipse([125, y - 20, 165, y + 20], fill=rgba(AMBER, p))
         ld.text((210, y), s, font=F("Bold", size), fill=rgba(WHITE, p), anchor="lm")
         base.alpha_composite(lay)
+
+# ---------- navigation (cell cursor jumps, name box) ----------
+def lerp_box(b0, b1, p):
+    """Interpolate two [x0, y0, x1, y1] boxes (p: 0..1)."""
+    return [u + (v - u) * p for u, v in zip(b0, b1)]
+
+def name_box(base, cx, cy, s, a=1.0, size=44, flash=0.0):
+    """Drawn 'Name Box' chip showing the active cell address, e.g. "A5000". flash 0..1 tints it amber."""
+    f = F("Mono", size)
+    w = max(220, f.getlength(s) + 70); h = size * 2.0
+    lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+    bg = tuple(int(WHITE[i] + (AMBER[i] - WHITE[i]) * clamp(flash)) for i in range(3))
+    d.rounded_rectangle([cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2], 18, fill=rgba(bg, a))
+    d.text((cx, cy), s, font=f, fill=rgba(NAVY, a), anchor="mm")
+    base.alpha_composite(lay)
