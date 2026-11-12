@@ -1,0 +1,12 @@
+Stop copy-pasting filtered rows. One formula does it live 👇
+
+=FILTER(A2:C7, B2:B7="Sales") pulls every Sales row into a new table that spills down by itself.
+Change the data and the result updates instantly, no clicks.
+Two conditions? Multiply them: =FILTER(A2:C7, (B2:B7="Sales")*(C2:C7>1000))
+No matches? Excel: add a 3rd argument like "None". Sheets: wrap it in IFNA(..., "None").
+
+Works in Excel 365 / 2021 / 2024 and Google Sheets (not Excel 2019 or older). Keep the cells below empty so it can spill.
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #excelformulas #spreadsheettips

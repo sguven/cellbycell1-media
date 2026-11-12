@@ -255,6 +255,12 @@ def formula_bar(base, x, y, w, text, t=None, t0=0.0, cps=28, a=1.0, colors=None,
     base.alpha_composite(lay)
     return h
 
+def fit_formula_size(text, w, max_size=46, min_size=28):
+    """Largest mono font size so `text` fits inside a formula_bar of width w."""
+    for s in range(max_size, min_size - 1, -1):
+        if F("Mono", s).getlength(text) <= w - 118 - 24: return s
+    return min_size
+
 def result_chip(base, cx, cy, s, ok, t, t0):
     """Big result chip with check or cross that pops in."""
     p = seg(t, t0, t0 + 0.35)
