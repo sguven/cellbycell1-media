@@ -1,0 +1,12 @@
+There's an AI formula hiding in Google Sheets, and it reads your text for you 👇
+
+=AI("Positive, negative or neutral?", A2)
+Type it, select the cell, click Generate and Insert, then fill it down to tag every row.
+Change the prompt for other jobs: "Summarize in 5 words", "Write a polite reply", "Price, quality or shipping?"
+Heads up: answers are text only, they don't update on their own (click Refresh), it can't be nested inside IF(), and AI can be wrong, so spot-check.
+
+Google Sheets on a computer, with an eligible Google Workspace or Google AI plan. Excel's =COPILOT() function was retired in Sept 2026: ask the Copilot pane instead.
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #aitools #spreadsheettips
