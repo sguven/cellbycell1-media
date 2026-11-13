@@ -1,0 +1,12 @@
+Your lookup says #N/A but the name is right there? Blame hidden spaces 👇
+
+=TRIM(A2) strips spaces at the start and end and squeezes double spaces down to one.
+Put it in a helper column, fill down, then look up the clean column: =XLOOKUP("Ben Cole", C2:C7, B2:B7)
+Check a cell with =LEN(A3): more characters than you can see means extra spaces.
+No helper column? Sheets: Data > Data cleanup > Trim whitespace. Excel: copy the TRIM column and Paste Values over the original.
+
+TRIM works in every Excel version and Google Sheets (XLOOKUP needs Excel 2021+ or Sheets). Heads up: neither one removes non-breaking spaces copied from web pages.
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #datacleaning #spreadsheettips

@@ -39,6 +39,11 @@
    "slug": "2026-11-12-filter-function",
    "style": "pianohouse",
    "seed": 199
+  },
+  {
+   "slug": "2026-11-13-trim-extra-spaces",
+   "style": "tropical",
+   "seed": 616
   }
  ]
 }

@@ -521,3 +521,40 @@ def name_box(base, cx, cy, s, a=1.0, size=44, flash=0.0):
     d.rounded_rectangle([cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2], 18, fill=rgba(bg, a))
     d.text((cx, cy), s, font=f, fill=rgba(NAVY, a), anchor="mm")
     base.alpha_composite(lay)
+
+# ---------- data cleaning: make hidden spaces visible ----------
+def excel_trim(s):
+    """What TRIM returns in Excel and Google Sheets for plain ASCII spaces: strip ends, collapse runs to one space."""
+    import re
+    return re.sub(" +", " ", s).strip(" ")
+
+def extra_space_idx(s):
+    """Indices of the spaces TRIM would remove (leading, trailing, and all but one of each inner run)."""
+    n = len(s); lead = n - len(s.lstrip(" ")); trail = len(s.rstrip(" "))
+    out = set(range(lead)) | set(range(trail, n))
+    for i in range(lead, trail):
+        if s[i] == " " and i > 0 and s[i - 1] == " ": out.add(i)
+    return out
+
+def space_text(base, x, cy, s, p, font, col=(30, 40, 60), hot=AMBER, chip_w=None, a=1.0):
+    """Draw text s left-aligned at (x, cy) with every space TRIM would remove shown as an amber chip.
+    p: 0..1 reveal (0 = looks like normal text, 1 = chips fully open). Returns the drawn width."""
+    lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+    extra = extra_space_idx(s); sp = font.getlength(" ")
+    cw = chip_w or font.size * 0.62
+    pe = back(p) if p > 0 else 0
+    cx = x
+    for i, ch in enumerate(s):
+        if i in extra:
+            w = sp + (cw - sp) * clamp(pe, 0, 1.2)
+            if p > 0:
+                hh = font.size * 0.42 * clamp(pe, 0, 1.2)
+                d.rounded_rectangle([cx + 2, cy - hh, cx + w - 2, cy + hh], 6, fill=rgba(hot, a * clamp(p * 2)))
+                r = 3.5 * clamp(pe, 0, 1.2)
+                d.ellipse([cx + w / 2 - r, cy - r, cx + w / 2 + r, cy + r], fill=rgba(NAVY, a * clamp(p * 2)))
+            cx += w
+        else:
+            d.text((cx, cy), ch, font=font, fill=rgba(col, a), anchor="lm")
+            cx += font.getlength(ch)
+    base.alpha_composite(lay)
+    return cx - x
