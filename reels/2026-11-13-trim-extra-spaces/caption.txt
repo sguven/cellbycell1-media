@@ -1,4 +1,4 @@
-Your lookup says #N/A but the name is right there? Blame hidden spaces 👇
+Your lookup says N/A but the name is right there? Blame hidden spaces 👇
 
 =TRIM(A2) strips spaces at the start and end and squeezes double spaces down to one.
 Put it in a helper column, fill down, then look up the clean column: =XLOOKUP("Ben Cole", C2:C7, B2:B7)
