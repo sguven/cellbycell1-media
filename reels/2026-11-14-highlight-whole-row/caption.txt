@@ -1,0 +1,12 @@
+Stop highlighting one cell. Light up the whole row 👇
+
+Select your table (A2:D7), then add a conditional formatting rule with a custom formula: =$D2>70000
+The $ locks column D, so every cell in the row checks the same salary. The 2 stays unlocked, so each row checks its own.
+Forget the $ and the reference slides right, so only column A lights up.
+Same trick for text: =$B2="Sales" highlights every Sales row.
+
+Excel (every version): Home > Conditional Formatting > New Rule > Use a formula to determine which cells to format > Format > Fill. On Mac pick Style: Classic first. Google Sheets: Format > Conditional formatting > Custom formula is.
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #conditionalformatting #spreadsheettips

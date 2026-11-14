@@ -558,3 +558,27 @@ def space_text(base, x, cy, s, p, font, col=(30, 40, 60), hot=AMBER, chip_w=None
             cx += font.getlength(ch)
     base.alpha_composite(lay)
     return cx - x
+
+# ---------- conditional formatting (rule evaluation + animated row fills) ----------
+def cf_matches(data, ref_col, test, ncols, lock_col=True, r0=1):
+    """Which cells a custom-formula conditional-formatting rule formats, the way Excel/Sheets apply it.
+    The rule is written for the top-left cell of the range (row r0, column 0), e.g. =$D2>70000 -> ref_col=3.
+    lock_col=True  ($D2): every column reads ref_col of its own row.
+    lock_col=False (D2):  the reference shifts with the column (column c reads ref_col + c); cells past the
+    data are empty and an empty cell fails the test. test(value_string) -> bool. Returns a set of (r, c)."""
+    out = set()
+    for r in range(r0, len(data)):
+        for c in range(ncols):
+            rc = ref_col if lock_col else ref_col + c
+            v = data[r][rc] if rc < len(data[r]) else ""
+            if v != "" and test(v): out.add((r, c))
+    return out
+
+def sweep_fills(cells, t, t0, col, col_gap=0.06, row_gap=0.12):
+    """{(r,c): col} for the cells already 'painted' at time t: rows light up one after another (row_gap),
+    each sweeping left to right (col_gap). cells: iterable of (r, c)."""
+    rows = sorted({r for r, _ in cells})
+    out = {}
+    for (r, c) in cells:
+        if t >= t0 + rows.index(r) * row_gap + c * col_gap: out[(r, c)] = col
+    return out
