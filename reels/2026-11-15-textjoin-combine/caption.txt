@@ -1,0 +1,12 @@
+Stop gluing cells together with & 🙅
+
+=TEXTJOIN(", ", TRUE, A2:A7) turns a whole column into one cell: Ava, Ben, Cara, Dev, Eli, Fay
+", " = what goes between each item (try " / " or " - ")
+TRUE = skip empty cells (FALSE keeps them and leaves ", ," gaps)
+Bonus: =TEXTJOIN(", ", TRUE, FILTER(A2:A7, B2:B7="Sales")) lists only the Sales team
+
+Works in Excel 365, 2024, 2021, 2019 and Google Sheets (the FILTER combo needs Excel 365/2021+ or Sheets).
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #textjoin #spreadsheettips

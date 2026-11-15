@@ -582,3 +582,43 @@ def sweep_fills(cells, t, t0, col, col_gap=0.06, row_gap=0.12):
     for (r, c) in cells:
         if t >= t0 + rows.index(r) * row_gap + c * col_gap: out[(r, c)] = col
     return out
+
+# ---------- formula breakdown & text results ----------
+def arg_rows(base, t, t0, items, y0=760, step=150, gap=0.35, size=42, tok_size=42):
+    """Explain a formula's arguments: each row = colored mono token chip + plain-English meaning, sliding in.
+    items: list of (token, color, meaning)."""
+    fT = F("Mono", tok_size); fD = F("Bold", size)
+    tw = max(fT.getlength(tok) for tok, _, _ in items) + 56
+    for i, (tok, col, s) in enumerate(items):
+        p = ease(seg(t, t0 + i * gap, t0 + 0.3 + i * gap))
+        if p <= 0: continue
+        y = y0 + i * step + (1 - p) * 30
+        lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+        d.rounded_rectangle([70, y - 58, W - 70, y + 58], 34, fill=rgba(NAVY2, p))
+        d.rounded_rectangle([96, y - 40, 96 + tw, y + 40], 22, fill=rgba(WHITE, p))
+        d.text((96 + tw / 2, y), tok, font=fT, fill=rgba(col, p), anchor="mm")
+        d.text((96 + tw + 34, y), s, font=fD, fill=rgba(WHITE, p), anchor="lm")
+        base.alpha_composite(lay)
+
+def value_row(base, t, t0, y, text, ok=None, label=None, hot=None, size=40, x0=70, x1=W - 70):
+    """A wide light 'cell value' bar showing a text result in mono (with optional label pill above and
+    check/cross on the right). hot: substring drawn in red to point at a problem (e.g. ', ,')."""
+    p = ease(seg(t, t0, t0 + 0.3))
+    if p <= 0: return
+    lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+    y = y + (1 - p) * 30
+    if label: pill(d, W / 2, y - 92, label, GREEN if ok else RED if ok is False else NAVY2, size=34, a=p)
+    d.rounded_rectangle([x0, y - 50, x1, y + 50], 22, fill=rgba((250, 251, 253), p))
+    f = F("Mono", size); x = x0 + 28
+    k = text.find(hot) if hot else -1
+    parts = [(text, (30, 40, 60))] if k < 0 else [(text[:k], (30, 40, 60)), (hot, RED), (text[k + len(hot):], (30, 40, 60))]
+    for s, col in parts:
+        if s:
+            if col == RED:
+                d.rounded_rectangle([x - 4, y - 34, x + f.getlength(s) + 4, y + 34], 8, fill=rgba((255, 214, 214), p))
+            d.text((x, y), s, font=f, fill=rgba(col, p), anchor="lm")
+        x += f.getlength(s)
+    base.alpha_composite(lay)
+    if ok is not None:
+        r = back(seg(t, t0 + 0.25, t0 + 0.5)) * 34
+        if r > 2: (check_icon if ok else cross_icon)(ImageDraw.Draw(base), x1 - 52, y, r)
