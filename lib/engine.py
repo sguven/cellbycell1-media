@@ -622,3 +622,16 @@ def value_row(base, t, t0, y, text, ok=None, label=None, hot=None, size=40, x0=7
     if ok is not None:
         r = back(seg(t, t0 + 0.25, t0 + 0.5)) * 34
         if r > 2: (check_icon if ok else cross_icon)(ImageDraw.Draw(base), x1 - 52, y, r)
+
+# ---------- fitting & looping ----------
+def fit_font(weight, text, max_w, max_size=190, min_size=60):
+    """Largest font of `weight` (Poppins weight or "Mono") whose rendered `text` fits in max_w px."""
+    for s in range(max_size, min_size - 1, -2):
+        if F(weight, s).getlength(text) <= max_w: return F(weight, s)
+    return F(weight, min_size)
+
+def loop_back(frame, first_frame, t, D, dur=0.35):
+    """Crossfade the last `dur` s of the final scene into the Reel's first frame so the video loops seamlessly."""
+    p = ease_io(seg(t, D - dur, D))
+    if p <= 0: return frame
+    return Image.blend(frame.convert("RGBA"), first_frame.convert("RGBA"), p)

@@ -1,0 +1,13 @@
+Copied your formula down and got $0.00 everywhere? One key fixes it.
+
+=B2*D2 → copied down, D2 slides to D3, D4... (empty cells = 0)
+=B2*$D$2 → the $ signs lock the rate cell, every row is right
+Keep pressing F4 to cycle: $D$2 → D$2 → $D2 → D2
+
+Works in Excel (Windows: F4 · Mac: Cmd+T) and Google Sheets (F4 · Mac: Fn+F4), while editing the formula.
+
+Did you know this one, or have you been typing $ by hand? 👇
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #excelshortcuts #spreadsheettips

@@ -14,7 +14,7 @@ When the calendar runs out, add the next 4 weeks of topics (same mix, no repeats
 Mon ~14:30 · Tue–Thu ~13:00 · Fri–Sat ~12:30 · Sun ~17:00
 
 ## Video spec
-- 1080x1920, 30 fps, H.264 yuv420p (CRF 18, preset veryfast), AAC 192k, 25–40 s.
+- 1080x1920, 30 fps, H.264 yuv420p (CRF 18, preset veryfast), AAC 192k, 15–25 s (max 25 s; owner's rule from the 2026-11-15 performance review: ~89% of viewers skip in the first 3 s).
 - Keep text out of the top 250 px and bottom 350 px (Instagram UI).
 - Fonts: Poppins (Bold titles, Medium body); formulas in DejaVu Sans Mono Bold. No emoji drawn in video.
 - Brand colors: navy `#13233F` background with a faint grid, panel navy `#26385A`, amber `#FFB020` accent,
@@ -22,18 +22,21 @@ Mon ~14:30 · Tue–Thu ~13:00 · Fri–Sat ~12:30 · Sun ~17:00
 - Building blocks (all in `lib/engine.py`, extend it, never rewrite per video): `Sheet` (light spreadsheet with
   column letters + row numbers, cell tints and outlines), `formula_bar` (typing animation, colored ranges),
   `result_chip` (green check / red cross), `label_card` (tag pill + title), `pop_text`, `punch`, `shake`, `outro`.
-- Structure: hook (≈3 s) → problem(s) or "why" → the fix shown on a real mini table with the formula typed in the
-  formula bar and the result chip → bonus/variation → "Works in" (Excel version + Google Sheets, or flag if one app only)
-  → outro card "Save this for your next spreadsheet!" + "Follow @cellbycell1".
+- Structure: hook (≈2–3 s) → problem or "why" → the fix on a real mini table (formula AFTER the result) → optional bonus
+  → "Works in" (Excel version + Google Sheets, or flag if one app only) → outro card "Save this for your next spreadsheet!"
+  + "Follow @cellbycell1". Every scene ≤ 2–3 s, at most 2 short text blocks on screen at once, constant motion, low text
+  density. The last frame crossfades back into the first (`loop_back` in engine.py) so the Reel loops.
 - Reference implementation: `reels/2026-11-05-xlookup-vs-vlookup/render.py` (first Reel).
   Each Reel gets its own folder with `render.py`, the mp4, `cover.jpg` and `caption.txt`.
 
 ## Hook / cover rules
-- The first frame must stop the scroll: huge amber word (≥170 px) + white line (≥100 px), a bold claim or problem
-  ("STOP using VLOOKUP", "Your dates are lying to you", "Nobody told you about this shortcut").
+- The first frame must stop the scroll: a huge amber headline of at most 6 words (≥170 px, `fit_font`) + the finished result
+  or a bad/good comparison on a clean table. No formula text filling the screen in the first second; the formula comes after
+  the result. Rotate hook patterns (question, "Stop...", number/time promise, before/after, "Wait for it");
+  "Stop..." at most 2 times per week.
 - Show the payoff within the first 1–1.5 s: bad formula crossed out vs good formula with a check, or a before/after table.
 - Motion from frame 0: punch-in zoom + quick shake on the headline, pop-in pill like "3 PROBLEMS · 1 FIX" or "10 SECONDS".
-- Cover = a hook frame where everything is visible (`thumb_offset` ≈ 2400 ms).
+- Cover = a hook frame where the headline and the result are fully visible (`thumb_offset` ≈ 2000–2400 ms).
 
 ## Music rules
 - **Clean, clear sound (owner's request, 2026-11-10):** the old saw/noise-based sounds were too metallic. New Reels use ONLY the
@@ -64,7 +67,9 @@ Mon ~14:30 · Tue–Thu ~13:00 · Fri–Sat ~12:30 · Sun ~17:00
 - No Microsoft/Google logos or product screenshots; draw the sheet ourselves. No claims of being a real person or an expert.
 
 ## Caption
-- Line 1: hook. Then 2–4 short lines with the formula(s) in plain text and what they do, one line on where it works, then
+- Short and scannable, max ~900 characters (hard limit 2200). Line 1: hook (a question or the result; don't start with
+  "Stop..." every day). Then at most 3 short lines with the formula(s)/keys and what they do, one line on where it works,
+  a comment question ("Which do you use: X or Y? 👇" / "What should I cover next? 👇"), then
   "Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick."
 - Exactly 5 hashtags total: `#cellbycell1` + 4 topic tags (base: #exceltips #googlesheets, plus 2 specific like
   #xlookup #spreadsheettips). Never more than 5 (Instagram limit).
