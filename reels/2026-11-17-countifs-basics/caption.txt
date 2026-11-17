@@ -1,0 +1,13 @@
+COUNTIF said 5. The real answer is 3. One extra letter fixes it 👇
+
+=COUNTIF(C2:C8,">60000") checks one rule, so Ops reps get counted too.
+=COUNTIFS(B2:B8,"Sales",C2:C8,">60000") counts a row only when BOTH rules match.
+Pattern: range, rule, range, rule. Keep rules like ">60000" in quotes.
+
+Works in Excel (Microsoft 365, 2016 and later) and Google Sheets, same syntax.
+
+How do you count with 2 conditions: COUNTIFS or filter and count? 👇
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #countifs #spreadsheettips
