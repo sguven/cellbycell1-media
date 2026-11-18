@@ -1,0 +1,13 @@
+Still typing "Done" by hand? Make a dropdown in 10 seconds 👇
+
+Excel: select the cells > Data > Data Validation > Allow: List > Source: Done,In progress,To do
+Google Sheets: Insert > Dropdown (or right-click > Dropdown), add your items and pick a color for each
+Everyone picks from the list, so the spelling is the same every time and filters stay accurate
+
+Works in Excel 2016+ and Microsoft 365 (Windows & Mac) and Google Sheets.
+
+What would you put in your dropdown? 👇
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #datavalidation #spreadsheettips

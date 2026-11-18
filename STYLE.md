@@ -21,7 +21,9 @@ Mon ~14:30 · Tue–Thu ~13:00 · Fri–Sat ~12:30 · Sun ~17:00
   white text. Green `#22B070` = correct, red `#EA484D` = wrong. Range tints: amber = lookup/search range, blue `#58A0FF` = return range.
 - Building blocks (all in `lib/engine.py`, extend it, never rewrite per video): `Sheet` (light spreadsheet with
   column letters + row numbers, cell tints and outlines), `formula_bar` (typing animation, colored ranges),
-  `result_chip` (green check / red cross), `label_card` (tag pill + title), `pop_text`, `punch`, `shake`, `outro`.
+  `result_chip` (green check / red cross), `label_card` (tag pill + title), `pop_text`, `punch`, `shake`, `outro`;
+  for data validation / UI steps: `Sheet.draw(dropdowns=...)` (status chips + arrow), `dropdown_list`, `pointer`,
+  `panel` + `form_field` (drawn dialogs with typing inputs).
 - Structure: hook (≈2–3 s) → problem or "why" → the fix on a real mini table (formula AFTER the result) → optional bonus
   → "Works in" (Excel version + Google Sheets, or flag if one app only) → outro card "Save this for your next spreadsheet!"
   + "Follow @cellbycell1". Every scene ≤ 2–3 s, at most 2 short text blocks on screen at once, constant motion, low text

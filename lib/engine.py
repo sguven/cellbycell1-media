@@ -145,11 +145,14 @@ class Sheet:
         b0, b1 = self.cell_box(r0, c), self.cell_box(r1, c)
         return [b0[0], b0[1], b1[2], b1[3]]
 
-    def draw(self, base, a=1.0, fills=None, text_cols=None, font_size=40, checks=None, strike=None):
+    def draw(self, base, a=1.0, fills=None, text_cols=None, font_size=40, checks=None, strike=None, dropdowns=None):
         """fills: {(r,c): color} cell tints. text_cols: {(r,c): color} text color overrides.
         checks: {(r,c): 0..1} draw an in-cell checkbox (0 = empty, 1 = ticked) instead of the text.
-        strike: {(r,c): 0..1} strikethrough line across the cell text, growing left to right."""
+        strike: {(r,c): 0..1} strikethrough line across the cell text, growing left to right.
+        dropdowns: {(r,c): (chip_bg, chip_fg) or None} draw the cell as a dropdown: value in a colored chip
+        (None = plain text) plus a small arrow on the right."""
         fills = fills or {}; text_cols = text_cols or {}; checks = checks or {}; strike = strike or {}
+        dropdowns = dropdowns or {}
         lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
         x, y = self.x, self.y
         sh = Image.new("RGBA", (W, H), (0, 0, 0, 0))
@@ -197,9 +200,21 @@ class Sheet:
                 else:
                     e = (q - 0.4) / 0.6
                     d.line([p0, p1, (p1[0] + (p2[0] - p1[0]) * e, p1[1] + (p2[1] - p1[1]) * e)], fill=rgba(WHITE, a), width=6, joint="curve")
+        for (r, c), chip in dropdowns.items():
+            b = self.cell_box(r, c); cy = (b[1] + b[3]) / 2
+            s = self.data[r][c]
+            f = F("Medium", font_size - 4)
+            if s and chip:
+                cw = f.getlength(s) + 36; ch = min(self.row_h - 24, font_size * 1.45)
+                d.rounded_rectangle([b[0] + 14, cy - ch / 2, b[0] + 14 + cw, cy + ch / 2], ch / 2, fill=rgba(chip[0], a))
+                d.text((b[0] + 14 + cw / 2, cy), s, font=f, fill=rgba(chip[1], a), anchor="mm")
+            elif s:
+                d.text((b[0] + 22, cy), s, font=f, fill=rgba(text_cols.get((r, c), (30, 40, 60)), a), anchor="lm")
+            ax = b[2] - 30
+            d.polygon([(ax - 13, cy - 6), (ax + 13, cy - 6), (ax, cy + 9)], fill=rgba((96, 108, 130), a))
         for r, row in enumerate(self.data):
             for c, s in enumerate(row):
-                if not s or (r, c) in checks: continue
+                if not s or (r, c) in checks or (r, c) in dropdowns: continue
                 b = self.cell_box(r, c)
                 bold = r == 0 and not self.row_labels or (self.row_labels and self.row_labels[r] == "1")
                 f = F("Bold" if bold else "Medium", font_size if not bold else font_size - 4)
@@ -622,6 +637,93 @@ def value_row(base, t, t0, y, text, ok=None, label=None, hot=None, size=40, x0=7
     if ok is not None:
         r = back(seg(t, t0 + 0.25, t0 + 0.5)) * 34
         if r > 2: (check_icon if ok else cross_icon)(ImageDraw.Draw(base), x1 - 52, y, r)
+
+# ---------- dropdowns, pointer, form fields (data validation) ----------
+def dropdown_list(base, sheet, r, c, options, t, t0, hover=None, t_close=None, chips=None, size=38, opt_h=76, w=None):
+    """Open dropdown popup under cell (r, c) of a Sheet: options drop in from t0, `hover` = index highlighted
+    (or callable t -> index/None), closes (fades) at t_close. chips: list of (bg, fg) per option (None = plain)."""
+    p = ease(seg(t, t0, t0 + 0.22))
+    if t_close is not None: p *= 1 - ease(seg(t, t_close, t_close + 0.18))
+    if p <= 0: return
+    b = sheet.cell_box(r, c)
+    w = w or max(b[2] - b[0], max(F("Medium", size).getlength(o) for o in options) + 110)
+    x0, y0 = b[0], b[3] + 8
+    hgt = (len(options) * opt_h + 20) * (0.6 + 0.4 * p)
+    sh = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ImageDraw.Draw(sh).rounded_rectangle([x0, y0 + 12, x0 + w, y0 + hgt + 12], 20, fill=(0, 0, 0, int(110 * p)))
+    base.alpha_composite(sh.filter(ImageFilter.GaussianBlur(14)))
+    lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+    d.rounded_rectangle([x0, y0, x0 + w, y0 + hgt], 20, fill=rgba(WHITE, p), outline=rgba((206, 213, 225), p), width=2)
+    hv = hover(t) if callable(hover) else hover
+    f = F("Medium", size)
+    for i, o in enumerate(options):
+        q = ease(seg(t, t0 + 0.05 + i * 0.05, t0 + 0.25 + i * 0.05)) * p
+        if q <= 0: continue
+        cy = y0 + 10 + i * opt_h + opt_h / 2
+        if hv == i: d.rounded_rectangle([x0 + 8, cy - opt_h / 2 + 4, x0 + w - 8, cy + opt_h / 2 - 4], 14, fill=rgba((220, 234, 255), q))
+        ch = chips[i] if chips else None
+        if ch:
+            cw = f.getlength(o) + 36; hh = size * 1.45
+            d.rounded_rectangle([x0 + 24, cy - hh / 2, x0 + 24 + cw, cy + hh / 2], hh / 2, fill=rgba(ch[0], q))
+            d.text((x0 + 24 + cw / 2, cy), o, font=f, fill=rgba(ch[1], q), anchor="mm")
+        else:
+            d.text((x0 + 30, cy), o, font=f, fill=rgba((30, 40, 60), q), anchor="lm")
+    base.alpha_composite(lay)
+    return [x0, y0, x0 + w, y0 + 10 + len(options) * opt_h]
+
+def dropdown_option_center(sheet, r, c, i, opt_h=76):
+    """Screen point at the middle-left of option i of dropdown_list under cell (r, c) (for the pointer)."""
+    b = sheet.cell_box(r, c)
+    return b[0] + 120, b[3] + 8 + 10 + i * opt_h + opt_h / 2
+
+def pointer(base, x, y, a=1.0, click=0.0, scale=1.0):
+    """Mouse arrow with its tip at (x, y). click: 0..1 expanding ring at the tip."""
+    lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+    if 0 < click < 1:
+        r = 14 + 56 * ease(click)
+        d.ellipse([x - r, y - r, x + r, y + r], outline=rgba(AMBER, a * (1 - click)), width=7)
+    k = 3.2 * scale
+    pts = [(0, 0), (0, 17), (4.2, 13.2), (7, 19.5), (9.6, 18.4), (6.9, 12.2), (12.4, 12.2)]
+    poly = [(x + px * k, y + py * k) for px, py in pts]
+    d.polygon(poly, fill=rgba(NAVY, a))
+    d.line(poly + [poly[0]], fill=rgba(WHITE, a), width=4, joint="curve")
+    base.alpha_composite(lay)
+
+def form_field(base, x, y, w, label, value, t=None, t0=0.0, cps=26, a=1.0, size=40, arrow=False, hot=False):
+    """Labeled form input (label left, light box right) whose value types on from t0 when t is given.
+    arrow=True draws a select arrow; hot=True gives the box an amber focus ring. Returns the box."""
+    lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+    fl = F("Bold", size - 2); fv = F("Medium", size)
+    lw = fl.getlength(label) + 30
+    d.text((x, y), label, font=fl, fill=rgba((40, 52, 76), a), anchor="lm")
+    bx0, bx1 = x + lw, x + w; hh = size * 1.7
+    d.rounded_rectangle([bx0, y - hh / 2, bx1, y + hh / 2], 14, fill=rgba((244, 246, 250), a),
+                        outline=rgba(AMBER if hot else (190, 198, 214), a), width=5 if hot else 3)
+    n = len(value) if t is None else int(clamp((t - t0) * cps, 0, len(value)))
+    d.text((bx0 + 20, y), value[:n], font=fv, fill=rgba((30, 40, 60), a), anchor="lm")
+    if t is not None and hot and n < len(value) and int(t * 4) % 2 == 0:
+        cx = bx0 + 22 + fv.getlength(value[:n]); d.line([(cx, y - hh * 0.3), (cx, y + hh * 0.3)], fill=rgba(NAVY, a), width=4)
+    if arrow:
+        ax = bx1 - 34
+        d.polygon([(ax - 13, y - 6), (ax + 13, y - 6), (ax, y + 9)], fill=rgba((96, 108, 130), a))
+    base.alpha_composite(lay)
+    return [bx0, y - hh / 2, bx1, y + hh / 2]
+
+def panel(base, t, t0, title, x0, y, w, hgt, t_out=None):
+    """Plain white modal panel with a grey title bar (scale/fade in). Returns alpha p (0..1); draw contents after."""
+    p = ease(seg(t, t0, t0 + 0.3))
+    if t_out is not None: p *= 1 - ease(seg(t, t_out, t_out + 0.25))
+    if p <= 0: return 0
+    sh = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ImageDraw.Draw(sh).rounded_rectangle([x0, y + 16, x0 + w, y + hgt + 16], 30, fill=(0, 0, 0, int(120 * p)))
+    base.alpha_composite(sh.filter(ImageFilter.GaussianBlur(16)))
+    lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+    d.rounded_rectangle([x0, y, x0 + w, y + hgt], 30, fill=rgba(WHITE, p))
+    d.rounded_rectangle([x0, y, x0 + w, y + 96], 30, fill=rgba((226, 231, 240), p))
+    d.rectangle([x0, y + 66, x0 + w, y + 96], fill=rgba((226, 231, 240), p))
+    d.text((x0 + 40, y + 50), title, font=F("Bold", 40), fill=rgba((40, 52, 76), p), anchor="lm")
+    base.alpha_composite(lay)
+    return p
 
 # ---------- fitting & looping ----------
 def fit_font(weight, text, max_w, max_size=190, min_size=60):
