@@ -737,3 +737,36 @@ def loop_back(frame, first_frame, t, D, dur=0.35):
     p = ease_io(seg(t, D - dur, D))
     if p <= 0: return frame
     return Image.blend(frame.convert("RGBA"), first_frame.convert("RGBA"), p)
+
+# ---------- sorting (rows slide to their new positions) ----------
+def moving_rows(base, sheet, rows, order, p, fills=None, font_size=40, a=1.0, stagger=0.08):
+    """Draw `sheet` (its data row 0 = header) with data rows that slide from their start slot to their sorted slot.
+    rows: list of data rows (lists of strings) in START order. order: list of start indices in FINAL order
+    (e.g. sorted(range(n), key=...)). p: 0..1 progress (each row eases with a small stagger).
+    fills: {(final_slot, c): color} tints that travel with the row once it has landed (applied at its current y)."""
+    n = len(rows)
+    blank = Sheet(sheet.x, sheet.y, sheet.col_w, [sheet.data[0]] + [[""] * len(sheet.col_w) for _ in range(n)],
+                  row_h=sheet.row_h, letters=sheet.letters, row_labels=sheet.row_labels)
+    blank.draw(base, a=a, font_size=font_size)
+    lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+    f = F("Medium", font_size)
+    dest = {src: k for k, src in enumerate(order)}
+    span = max(1e-6, 1 - stagger * (n - 1))
+    for src in range(n):
+        k = dest[src]
+        q = ease_io(clamp((p - stagger * k) / span))
+        y0 = sheet.y + sheet.hdr_h + (1 + src) * sheet.row_h
+        y1 = sheet.y + sheet.hdr_h + (1 + k) * sheet.row_h
+        y = y0 + (y1 - y0) * q
+        lift = math.sin(math.pi * q) * 10          # rows in motion get a slight drop shadow + lift
+        for c, s in enumerate(rows[src]):
+            x0 = sheet.col_x(c)
+            col = (fills or {}).get((k, c)) if q >= 1 else None
+            if col or 0 < q < 1:
+                d.rectangle([x0 + 2, y + 2 - lift, x0 + sheet.col_w[c] - 2, y + sheet.row_h - 2 - lift],
+                            fill=rgba(col or (255, 246, 222), a))
+                if 0 < q < 1:
+                    d.line([(x0, y - lift), (x0 + sheet.col_w[c], y - lift)], fill=rgba(AMBER, a), width=3)
+                    d.line([(x0, y + sheet.row_h - lift), (x0 + sheet.col_w[c], y + sheet.row_h - lift)], fill=rgba(AMBER, a), width=3)
+            d.text((x0 + 22, y + sheet.row_h / 2 - lift), s, font=f, fill=rgba((30, 40, 60), a), anchor="lm")
+    base.alpha_composite(lay)

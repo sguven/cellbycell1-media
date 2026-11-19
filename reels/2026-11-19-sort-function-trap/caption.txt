@@ -1,0 +1,13 @@
+Biggest number on top? SORT does it, but Excel and Google Sheets spell "descending" differently.
+
+Excel: =SORT(A2:B6,2,-1) → sorts by column 2, high to low
+Google Sheets: =SORT(A2:B6,2,FALSE) → same result
+Low to high: 1 in Excel, TRUE in Sheets
+
+Works in Excel 365 / 2021 / 2024 and Google Sheets (Sheets needs the column and order arguments).
+
+Which do you use more: Excel or Google Sheets? 👇
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #sortfunction #spreadsheettips
