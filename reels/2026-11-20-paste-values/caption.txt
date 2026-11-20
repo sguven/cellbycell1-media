@@ -1,0 +1,13 @@
+Pasted your totals and every cell broke? Ctrl+V pasted the formula, not the numbers.
+
+Google Sheets: Ctrl+Shift+V → paste values only (Cmd+Shift+V on Mac)
+Excel (Windows): Ctrl+Alt+V → V → Enter (Paste Special › Values)
+You get plain numbers: no formulas, no broken references.
+
+Works in Google Sheets and Excel for Windows.
+
+Which do you press more: Ctrl+V or paste values? 👇
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #pastevalues #spreadsheettips
