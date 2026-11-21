@@ -1,0 +1,13 @@
+10 orders, but only 6 customers. COUNTA can't tell the difference 👀
+
+=COUNTA(UNIQUE(A2:A11)) → counts each name once
+UNIQUE drops the repeats, COUNTA counts what's left
+Use an exact range with no blank cells
+
+Works in Excel 365 / 2021+ and Google Sheets (Sheets also has =COUNTUNIQUE(A2:A11)).
+
+Do you count unique values with a formula or a pivot table? 👇
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #excelformulas #spreadsheettips
