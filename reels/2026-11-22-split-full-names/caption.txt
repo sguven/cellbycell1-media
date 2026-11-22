@@ -1,0 +1,13 @@
+Still splitting names by hand? Type ONE first name and let the sheet do the other 99 ✂️
+
+Excel: type the first name next to the full name, press Ctrl + E (Flash Fill)
+Repeat for the last name, or use Data > Flash Fill
+Google Sheets: =SPLIT(A2, " ") puts first and last in two cells, then fill down
+
+Works in Excel 2016+ / Microsoft 365 (Flash Fill) and Google Sheets (SPLIT). Tip: middle names give you a 3rd column with SPLIT.
+
+Flash Fill or formulas, which do you trust more? 👇
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #datacleaning #spreadsheettips

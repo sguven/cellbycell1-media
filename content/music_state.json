@@ -89,6 +89,11 @@
    "slug": "2026-11-21-count-unique",
    "style": "kalimbapop",
    "seed": 319
+  },
+  {
+   "slug": "2026-11-22-split-full-names",
+   "style": "brightpop",
+   "seed": 58
   }
  ]
 }
