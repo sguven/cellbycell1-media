@@ -1,4 +1,4 @@
-Still splitting names by hand? Type ONE first name and let the sheet do the other 99 ✂️
+Still splitting names by hand? Type ONE first name and let the sheet fill in the rest ✂️
 
 Excel: type the first name next to the full name, press Ctrl + E (Flash Fill)
 Repeat for the last name, or use Data > Flash Fill
