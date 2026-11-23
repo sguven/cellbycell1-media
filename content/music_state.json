@@ -94,6 +94,11 @@
    "slug": "2026-11-22-split-full-names",
    "style": "brightpop",
    "seed": 58
+  },
+  {
+   "slug": "2026-11-23-networkdays",
+   "style": "pianohouse",
+   "seed": 615
   }
  ]
 }

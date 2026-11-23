@@ -311,9 +311,18 @@ def shake(frame, t, t0, dur=0.25, amp=14):
     out = Image.new("RGBA", (W, H), NAVY + (255,)); out.alpha_composite(frame, (dx, 0))
     return out
 
-def outro(t, handle="@cellbycell1", line1="Save this for", line2="your next spreadsheet!"):
+def outro(t, handle="@cellbycell1", line1="Save this for", line2="your next spreadsheet!", question=None):
+    """question: optional short either/or comment prompt (same as the caption's) shown above the card,
+    e.g. "By hand or formula?"; a drawn comment arrow points down to the comments. No emoji drawn."""
     base = background()
     lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+    if question:
+        qa = ease(seg(t, 0.25, 0.6))
+        fq = fit_font("Bold", question, W - 200, 84, 50)
+        qy = 400 + (1 - qa) * 30
+        d.text((W / 2, qy), question, font=fq, fill=rgba(WHITE, qa), anchor="mm", stroke_width=6, stroke_fill=NAVY)
+        d.text((W / 2, qy + fq.size * 0.5 + 40), "Answer in the comments", font=F("Medium", 40),
+               fill=rgba(AMBER, qa), anchor="mm")
     p = ease(seg(t, 0.05, 0.5))
     top = 560 + (1 - p) * 60
     d.rounded_rectangle([70, top, W - 70, top + 660], 56, fill=rgba(AMBER, p))

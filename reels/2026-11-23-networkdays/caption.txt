@@ -1,0 +1,13 @@
+Your "30-day" deadline is really 23 work days 📅
+
+=C2-B2 counts calendar days, weekends included
+=NETWORKDAYS(B2,C2) counts Mon–Fri only (start and end day both count)
+=NETWORKDAYS(B2,C2,F2:F4) also skips the holiday dates in F2:F4
+
+Works in Excel 2007+ / Microsoft 365 and Google Sheets. Different weekend days? Use NETWORKDAYS.INTL.
+
+Do you count deadlines by hand or with a formula? 👇
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #projectmanagement #spreadsheettips
