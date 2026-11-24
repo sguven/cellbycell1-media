@@ -1,0 +1,13 @@
+Scrolled to row 50 and forgot which column is which? Freeze the header row 👇
+
+Excel: View > Freeze Panes > Freeze Top Row (Mac: View > Freeze Top Row)
+Google Sheets: View > Freeze > 1 row
+Row 1 now stays on top while you scroll. Undo: Unfreeze Panes (Excel) or Freeze > No rows (Sheets)
+
+Works in Excel for Microsoft 365 (Windows, Mac, web) and Google Sheets.
+
+Freeze it or scroll back up? 👇
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #spreadsheettips #productivityhacks

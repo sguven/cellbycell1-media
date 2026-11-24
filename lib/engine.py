@@ -779,3 +779,32 @@ def moving_rows(base, sheet, rows, order, p, fills=None, font_size=40, a=1.0, st
                     d.line([(x0, y + sheet.row_h - lift), (x0 + sheet.col_w[c], y + sheet.row_h - lift)], fill=rgba(AMBER, a), width=3)
             d.text((x0 + 22, y + sheet.row_h / 2 - lift), s, font=f, fill=rgba((30, 40, 60), a), anchor="lm")
     base.alpha_composite(lay)
+
+# ---------- scrolling (freeze panes / long sheets) ----------
+def scroll_sheet(base, x, y, col_w, header, rows, top, n_vis, frozen=False, row_h=80, font_size=36,
+                 fills=None, divider=None, header_fill=None, a=1.0):
+    """Draw a window onto a long sheet scrolled so that data row index `top` (0-based into `rows`) is the first
+    visible data row; row numbers follow the real sheet (header = row 1, rows[i] = row i + 2).
+    frozen=False: the header scrolls away like a normal sheet (top = 0 shows it, top = k starts at row k + 1).
+    frozen=True: row 1 (header) stays pinned above the scrolled rows; `divider` = (color, width) draws the freeze line.
+    fills: {(visible_r, c): color} by visible row index (0 = first drawn row). Returns the Sheet."""
+    top = max(0, int(top))
+    if frozen:
+        body = rows[top:top + n_vis - 1]
+        data = [header] + body
+        labels = ["1"] + [str(top + 2 + i) for i in range(len(body))]
+    else:
+        allr = [header] + rows
+        data = allr[top:top + n_vis]
+        labels = [str(top + 1 + i) for i in range(len(data))]
+    s = Sheet(x, y, col_w, data, row_h=row_h, row_labels=labels)
+    fl = dict(fills or {})
+    if header_fill and labels[0] == "1":
+        for c in range(len(col_w)): fl[(0, c)] = header_fill
+    s.draw(base, a=a, fills=fl, font_size=font_size)
+    if frozen and divider:
+        lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+        gy = y + s.hdr_h + row_h
+        d.line([(x, gy), (x + s.width(), gy)], fill=rgba(divider[0], a), width=divider[1])
+        base.alpha_composite(lay)
+    return s
