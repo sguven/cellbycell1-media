@@ -1,0 +1,13 @@
+A pivot table in ONE formula? Yes, in Excel 365.
+
+=GROUPBY(A2:A9,B2:B9,SUM,,0,-2)
+A2:A9 = what to group by · B2:B9 = what to add · SUM = how to combine
+0 = no total row · -2 = sort by column 2, biggest first
+
+Works in Excel for Microsoft 365. Google Sheets: =QUERY(A1:B9,"select A, sum(B) group by A order by sum(B) desc",1) · Older Excel: use a PivotTable.
+
+PivotTable or GROUPBY: which do you use? 👇
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #groupby #pivottable

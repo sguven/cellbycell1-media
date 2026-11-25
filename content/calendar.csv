@@ -18,7 +18,7 @@ date,day,category,slug,topic,notes
 2026-11-22,Sun,cleaning,split-full-names,Split full names into first and last,"Excel Ctrl+E Flash Fill or TEXTSPLIT; Sheets =SPLIT(A2,"" "") or Data > Split text to columns"
 2026-11-23,Mon,formula,networkdays,Count business days between two dates,"=NETWORKDAYS(start,end,holidays); both"
 2026-11-24,Tue,shortcut,freeze-header-row,Keep your header visible while scrolling,View > Freeze (panes/top row in Excel; 1 row in Sheets)
-2026-11-25,Wed,formula,index-match,INDEX MATCH explained in 20 seconds,"=INDEX(A2:A5, MATCH(1063, B2:B5, 0)); works in old Excel too"
+2026-11-25,Wed,wow,groupby-one-formula,Pivot table in one formula (GROUPBY),"Excel 365 =GROUPBY(A2:A9,B2:B9,SUM,,0,-2); Sheets QUERY group by; swapped in for index-match (max 1 pure-syntax formula per week rule)"
 2026-11-26,Thu,visual,sparklines,Tiny charts inside a cell,Sheets =SPARKLINE(B2:M2); Excel Insert > Sparklines > Line
 2026-11-27,Fri,formula,percent-change,Percent change the right way,"=(new-old)/old, format as %; common mistake old/new"
 2026-11-28,Sat,cleaning,proper-case-names,Fix ALL CAPS names in one go,"=PROPER(A2), also UPPER/LOWER; then paste values"
