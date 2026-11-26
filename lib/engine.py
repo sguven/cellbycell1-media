@@ -808,3 +808,41 @@ def scroll_sheet(base, x, y, col_w, header, rows, top, n_vis, frozen=False, row_
         d.line([(x, gy), (x + s.width(), gy)], fill=rgba(divider[0], a), width=divider[1])
         base.alpha_composite(lay)
     return s
+
+# ---------- sparklines (tiny in-cell charts) ----------
+def cell_sparkline(base, box, values, p=1.0, kind="line", col=(52, 120, 220), high=None, low=None, a=1.0,
+                   pad=(18, 16), width=6, ymin=None):
+    """Draw a sparkline inside a cell box [x0,y0,x1,y1].
+    kind: "line" (draws left->right as p goes 0..1) or "column" (bars grow, staggered).
+    high/low: optional colors for the max/min point (marker dot on a line, bar color on columns).
+    ymin: axis floor for columns (default 0, like the Sheets column default)."""
+    if p <= 0 or a <= 0: return
+    lay = Image.new("RGBA", (W, H), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+    x0, y0, x1, y1 = box[0] + pad[0], box[1] + pad[1], box[2] - pad[0], box[3] - pad[1]
+    n = len(values); hi, lo = max(values), min(values)
+    imax, imin = values.index(hi), values.index(lo)
+    if kind == "line":
+        span = (hi - lo) or 1
+        pts = [(x0 + (x1 - x0) * i / (n - 1), y1 - (y1 - y0) * (v - lo) / span) for i, v in enumerate(values)]
+        pe = clamp(p) * (n - 1); k = int(pe)
+        draw = pts[:k + 1]
+        if k < n - 1:
+            f = pe - k
+            draw.append((pts[k][0] + (pts[k + 1][0] - pts[k][0]) * f, pts[k][1] + (pts[k + 1][1] - pts[k][1]) * f))
+        if len(draw) > 1: d.line(draw, fill=rgba(col, a), width=width, joint="curve")
+        for i, c in ((imax, high), (imin, low)):
+            if c and pe >= i:
+                r = width * 1.3 * back(clamp((pe - i) * 2))
+                d.ellipse([pts[i][0] - r, pts[i][1] - r, pts[i][0] + r, pts[i][1] + r], fill=rgba(c, a))
+    else:
+        floor = 0 if ymin is None else ymin
+        span = (hi - floor) or 1
+        slot = (x1 - x0) / n; bw = slot * 0.7
+        for i, v in enumerate(values):
+            q = ease(clamp(p * (n + 2) / 3 - i * 0.4))
+            if q <= 0: continue
+            c = high if (high and i == imax) else low if (low and i == imin) else col
+            bx = x0 + slot * i + (slot - bw) / 2
+            top = y1 - (y1 - y0) * (v - floor) / span * q
+            d.rectangle([bx, top, bx + bw, y1], fill=rgba(c, a))
+    base.alpha_composite(lay)

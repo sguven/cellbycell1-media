@@ -1,0 +1,13 @@
+Who's slipping? One tiny chart per row tells you in a second 📈
+
+=SPARKLINE(B2:F2) draws a trend line inside the cell (Google Sheets). Fill it down for every row.
+=SPARKLINE(B3:F3,{"color","red"}) colors one line red to flag it.
+Excel: Insert > Sparklines > Line, pick the data cells, OK, then drag the handle down.
+
+Works in Google Sheets, Excel 2016+ (Windows) and Excel 2021+ / Microsoft 365 (Mac). In Excel it's a menu feature, not a formula.
+
+Sparkline or full chart? 👇
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #sparklines #datavisualization
