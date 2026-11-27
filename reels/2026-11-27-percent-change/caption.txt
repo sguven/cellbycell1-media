@@ -1,0 +1,13 @@
+$80 → $100. Is that a 20% or a 25% increase? 🤔
+
+✅ =(C2-B2)/B2 → (new − old) / old = 25%
+❌ Dividing by the NEW value gives 20%, the most common mistake
+📊 Shows 0.25? Format as %: Ctrl+Shift+5 in Sheets, Home > Percent Style in Excel. A negative % means a drop.
+
+Works in Excel and Google Sheets, same formula.
+
+Did you pick A or B? Be honest 👇
+
+Save this for your next spreadsheet 📌 Follow @cellbycell1 for a daily Excel & Google Sheets trick.
+
+#cellbycell1 #exceltips #googlesheets #percentchange #spreadsheettips
