@@ -31,6 +31,31 @@ Mon ~14:30 · Tue–Thu ~13:00 · Fri–Sat ~12:30 · Sun ~17:00
 - Reference implementation: `reels/2026-11-05-xlookup-vs-vlookup/render.py` (first Reel).
   Each Reel gets its own folder with `render.py`, the mp4, `cover.jpg` and `caption.txt`.
 
+## Opening formats: hook test from 2026-11-27 (owner's request, takes priority over the hook rules below)
+Why: with the amber-headline title card ~87% of viewers swipe away in the first 3 s (avg watch ~2.5 s). It reads like an
+ad slide: big headline, small table, empty navy. From 2026-11-27 every Reel opens with one of three new formats instead.
+**`content/calendar.csv` has an `opening` column: use the format named there for that day.** No value there = rotate
+`cold_open` → `quiz_open` → `chat_open`, never the same as either of the last two rows of `content/posted.csv`.
+
+| opening | first frame | best for |
+|---|---|---|
+| `cold_open` | full-screen sheet on the light canvas, the fix/break already running in frame 3, caption sticker at ~0.35 s | visual, shortcut, data-cleaning topics |
+| `quiz_open` | question sticker + sheet + two answer cards (A/B) + countdown, answer lands at ~1.8 s | "common mistake" and formula topics (wrong answer = the real common mistake) |
+| `chat_open` | a message from a manager/coworker creates the stakes, the sheet answers it at ~1.2 s | formula topics with a real-life use (IF, lookups, dates) |
+| `headline` | the old amber headline card | control only; do not use during the test |
+
+- Helpers are in `lib/hooks.py` (`screen_bg`, `big_sheet`, `sticker`, `chat_bubble`, `typing_dots`, `quiz_cards`, `camera`,
+  `shake_bg`). One full worked example of each format: `tools/hook_demo.py` (`python3 tools/hook_demo.py stills <dir>`).
+  Copy the matching `sc_*` function into the day's `render.py` as `sc_hook` and adapt data and texts.
+- Rules for all three: motion from frame 0 (use `camera`), the sheet covers at least half of the screen with cell text
+  ≥ 46 px, ONE short text block in the first second (max 6 words, no formula text), every value computed from the table,
+  hook scene 2.2–2.6 s. Quiz answers must be short (a number or 1–2 words); the wrong one is what people really type.
+  Chat messages: max 9 words each, no real names or companies.
+- After the hook the Reel continues on the usual navy scenes (`background()`), unchanged.
+- Cover (`thumb_offset`) = a hook frame where the sticker/question and the result are both visible (≈ 2000 ms).
+- Log it: `content/posted.csv` has an `opening` column; write the format used for every post. The weekly review compares
+  skip rate and watch time by `opening` against the `headline` baseline and keeps the winner.
+
 ## Hook / cover rules
 - The first frame must stop the scroll: a huge amber headline of at most 6 words (≥170 px, `fit_font`) + the finished result
   or a bad/good comparison on a clean table. No formula text filling the screen in the first second; the formula comes after
@@ -81,4 +106,4 @@ Mon ~14:30 · Tue–Thu ~13:00 · Fri–Sat ~12:30 · Sun ~17:00
 2. Check `https://raw.githubusercontent.com/sguven/cellbycell1-media/main/reels/...` returns HTTP 200.
 3. Windsor `execute_action` → connector `instagram`, action `create_video_post`, account `17841476311300072`,
    params `video_url`, `caption`, `thumb_offset`, `share_to_feed: true`.
-4. Append the post to `content/posted.csv` (date, category, slug, media_id, video_url) and push.
+4. Append the post to `content/posted.csv` (date, category, slug, media_id, video_url, opening) and push.

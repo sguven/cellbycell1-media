@@ -44,3 +44,12 @@ the Excel-vs-Sheets syntax angle was the weakest hook of the week. Caption quest
    (AI/automation in Sheets or Excel, verified with WebSearch). Keep at least 2 visual/shortcut topics (sparklines, freeze header, heatmap).
 3. **Length & comments:** 15–18 s total, scenes ≤ 2.4 s; end the video (outro) and the caption with the same either/or question
    ("Flash Fill or formula? 👇") so the comment prompt is seen, not only read.
+
+
+## 2026-11-26: opening-format test started (owner's request)
+State before the test (Windsor, 2026-11-26): 26 followers, 24 posts; Reels since 11-15 sit at ~115–155 views, 82–92% skip,
+1.6–4.1 s watch, 0 comments. From 2026-11-27 each Reel uses the `opening` set in `content/calendar.csv`
+(`cold_open`, `quiz_open`, `chat_open`; see STYLE.md "Opening formats"). All posts up to 11-26 are `headline`.
+**Next weekly review:** add a "By opening" table (n, avg views, avg skip, avg watch, saves, comments) and compare with the
+`headline` baseline (avg skip 86.9%, avg watch 2.53 s). Keep any format that is at least 5 points lower on skip over 2+ Reels,
+drop one that is worse than `headline`, and fill the next week's `opening` column accordingly.
