@@ -53,3 +53,9 @@ State before the test (Windsor, 2026-11-26): 26 followers, 24 posts; Reels since
 **Next weekly review:** add a "By opening" table (n, avg views, avg skip, avg watch, saves, comments) and compare with the
 `headline` baseline (avg skip 86.9%, avg watch 2.53 s). Keep any format that is at least 5 points lower on skip over 2+ Reels,
 drop one that is worse than `headline`, and fill the next week's `opening` column accordingly.
+
+### Önümüzdeki hafta için kurallar
+1. **Hook = the `opening` named in today's row of `content/calendar.csv`** (`cold_open`, `quiz_open` or `chat_open`), built with
+   `lib/hooks.py` from the matching example in `tools/hook_demo.py`. No amber headline card during the test (owner's request, 2026-11-26).
+2. One short text block in the first second (max 6 words), sheet covers at least half the screen, motion from frame 0; hook scene 2.2–2.6 s.
+3. Topic mix and length stay as in the 2026-11-22 rules (15–18 s, max 1 pure-syntax formula per week); write the `opening` used into `content/posted.csv`.
